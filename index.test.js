@@ -576,36 +576,36 @@ describe('CREATE', () => {
  *****************************************************************************************/
 
 describe('FIND / CREATE / UPDATE (Logic)', () => {
-  describe('findOrCreateService', () => {
+  describe('findCreateOrUpdateService', () => {
     test('creates the Service when none exists already', async () => {
       ECSClient.send = jest.fn()
           .mockResolvedValueOnce(describeServicesCommandOutputMissing)
           .mockResolvedValue(createServiceCommandOutput);
-      await expect(i.findOrCreateService(ECSClient, parameters)).resolves.toEqual(createdOrFoundService);
+      await expect(i.findCreateOrUpdateService(ECSClient, parameters)).resolves.toEqual(createdOrFoundService);
     });
 
     test('returns the Service when one exists and it is active', async () => {
       ECSClient.send = jest.fn().mockResolvedValue(describeServicesCommandOutputFound);
-      await expect(i.findOrCreateService(ECSClient, parameters)).resolves.toEqual(createdOrFoundService);
+      await expect(i.findCreateOrUpdateService(ECSClient, parameters)).resolves.toEqual(createdOrFoundService);
     });
 
     test('creates the Service when one exists and it is inactive', async () => {
       ECSClient.send = jest.fn()
           .mockResolvedValueOnce(describeServicesCommandOutputInactive)
           .mockResolvedValueOnce(createServiceCommandOutput);
-      await expect(i.findOrCreateService(ECSClient, parameters)).resolves.toEqual(createdOrFoundService);
+      await expect(i.findCreateOrUpdateService(ECSClient, parameters)).resolves.toEqual(createdOrFoundService);
     });
 
     test('updates the Service when one exists and it needs updating', async () => {
       ECSClient.send = jest.fn()
           .mockResolvedValueOnce(describeServicesCommandOutputNeedsUpdating)
           .mockResolvedValueOnce(createServiceCommandOutput);
-      await expect(i.findOrCreateService(ECSClient, parameters)).resolves.toEqual(createdOrFoundService);
+      await expect(i.findCreateOrUpdateService(ECSClient, parameters)).resolves.toEqual(createdOrFoundService);
     });
 
     test('throws an error when a generic error occurs', async () => {
       ECSClient.send = jest.fn().mockResolvedValueOnce(genericFailureResponse); // CreateServiceCommand
-      await expect(i.findOrCreateService(ECSClient, parameters)).rejects.toThrow(Error);
+      await expect(i.findCreateOrUpdateService(ECSClient, parameters)).rejects.toThrow(Error);
     });
   });
 });
