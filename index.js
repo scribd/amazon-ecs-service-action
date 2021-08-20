@@ -454,7 +454,7 @@ async function createService(client, parameters) {
  * @param {Error} err Error
  * @return {Promise} that resolves to {@aws-sdk/client-ecs/DescribeServiceCommandOutput} or {@aws-sdk/client-ecs/CreateServiceCommandOutput}
  */
-async function handlefindOrCreateServiceErrors(client, parameters, err) {
+async function handlefindCreateOrUpdateServiceErrors(client, parameters, err) {
   if (err.name === 'NotFoundException') {
     core.info(`Unable to find ${parameters.spec.serviceName}. Creating newly.`);
     return await createService(client, parameters);
@@ -474,10 +474,10 @@ async function handlefindOrCreateServiceErrors(client, parameters, err) {
  * @param {Object} parameters Original parameters
  * @return {Promise} that resolves to {@aws-sdk/client-ecs/DescribeServiceCommandOutput} or {@aws-sdk/client-ecs/CreateServiceCommandOutput}
  */
-async function findOrCreateService(client, parameters) {
+async function findCreateOrUpdateService(client, parameters) {
   core.info(`Looking for Service: ${parameters.spec.serviceName}`);
   const found = await describeService(client, parameters).catch((err) => {
-    return handlefindOrCreateServiceErrors(client, parameters, err);
+    return handlefindCreateOrUpdateServiceErrors(client, parameters, err);
   });
 
   const [changes, updateParams] = updateNeeded(found, parameters);
@@ -635,7 +635,7 @@ async function run() {
   let service;
   if (parameters.action === 'create') {
     core.info('Creating / Updating Service...');
-    service = await findOrCreateService(client, parameters);
+    service = await findCreateOrUpdateService(client, parameters);
   } else if (parameters.action === 'delete') {
     core.info('Deleting Service...');
     service = await deleteService(client, parameters);
@@ -663,7 +663,7 @@ if (require.main === module) {
 module.exports = {
   createInput,
   createService,
-  findOrCreateService,
+  findCreateOrUpdateService,
   deleteService,
   deleteInput,
   describeService,
