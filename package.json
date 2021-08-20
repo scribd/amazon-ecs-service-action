@@ -1,0 +1,40 @@
+{
+  "name": "scribd-amazon-ecs-service-action",
+  "version": "0.0.1",
+  "description": "Creates an Amazon ECS Service.",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint **.js --fix",
+    "package": "ncc build index.js -o dist",
+    "test": "eslint **.js --fix && jest --config .jest.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scribd/amazon-ecs-service-action.git"
+  },
+  "keywords": [
+    "AWS",
+    "GitHub",
+    "Actions",
+    "JavaScript"
+  ],
+  "author": "Scribd",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/scribd/amazon-ecs-service-action/issues"
+  },
+  "homepage": "https://github.com/scribd/amazon-ecs-service-action#readme",
+  "dependencies": {
+    "@actions/core": "^1.4.0",
+    "@aws-sdk/client-ecs": "^3.23.0",
+    "lodash": "^4.17.21",
+    "yaml": "^1.10.2"
+  },
+  "devDependencies": {
+    "@vercel/ncc": "^0.29.0",
+    "eslint": "^7.30.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-plugin-no-floating-promise": "^1.0.2",
+    "jest": "^27.0.6"
+  }
+}

@@ -1,0 +1,6 @@
+node_modules/
+coverage/
+
+.nvmrc
+**/*.log
+.vscode/

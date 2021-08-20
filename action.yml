@@ -1,0 +1,41 @@
+name: 'Amazon ECS Service Action for GitHub Actions'
+description: 'Creates an Amazon ECS Service'
+branding:
+  icon: 'cloud'
+  color: 'orange'
+inputs:
+  spec:
+    description: 'Specify either a `spec-file` as a filename, a `spec` as a JSON string, or both. If you supply both, `spec` will naively override any top level keys in `spec-file`. 
+      You might do this if you have data coming from a previous step. 
+      
+      See https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-ecs/interfaces/createservicecommandinput.html for information about how to craft a valid `spec` or `spec-file`.'
+    required: false
+  spec-file:
+    description: 'Specify either a `spec-file` as a filename, a `spec` as a JSON string, or both. If you supply both, `spec` will naively override any top level keys in `spec-file`. 
+      You might do this if you have data coming from a previous step. 
+      
+      See https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-ecs/interfaces/createservicecommandinput.html for information about how to craft a valid `spec` or `spec-file`.'
+    required: false
+  force-new-deployment:
+    description: 'Whether to force a new deployment when updating the service. false by default.
+      
+      true | [false]'
+    required: false
+  action:
+    description: 'Whether to create the resource or delete the resource. Creates by default
+      
+      [create] | delete'
+    required: false
+  force-delete:
+    description: 'If true, allows you to delete a service even if it has not been scaled down to zero tasks. It is only necessary to use this if the service is using the REPLICA scheduling strategy.
+    
+    true | [false]'
+    required: false
+outputs:
+  arn:
+    description: 'The ARN of the Service'
+  service:
+    description: 'The created or found Service in JSON'
+runs:
+  using: 'node12'
+  main: 'dist/index.js'

@@ -1,0 +1,46 @@
+{
+  "deploymentConfiguration": {
+    "deploymentCircuitBreaker": {
+      "enable": true,
+      "rollback": false
+    },
+    "maximumPercent": 200,
+    "minimumHealthyPercent": 32
+  },
+  "deploymentController": "ECS",
+  "desiredCount": 2,
+  "enableECSManagedTags": true,
+  "launchType": "EC2",
+  "loadBalancers": [],
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": [
+        "subnet-abc123",
+        "subnet-def567"
+      ],
+      "securityGroups": [
+        "sg-abc123",
+        "sg-def567"
+      ],
+      "assignPublicIp": "DISABLED"
+    }
+  },
+  "placementConstraints": [],
+  "placementStrategy": [],
+  "schedulingStrategy": "REPLICA",
+  "serviceName": "my-service",
+  "serviceRegistries": [
+    {
+      "registryArn": "arn:aws:servicediscovery:us-east-1:1234567890:service/srv-my-service:",
+      "port": 8080
+    }
+  ],
+  "tags": [
+    {
+      "key": "my-key",
+      "value": "my-value"
+    }
+  ],
+  "taskDefinition": "task-definition-family:123",
+  "cluster": "my-cluster"
+}
