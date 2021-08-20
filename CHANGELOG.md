@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.0...v1.0.1) (2021-08-20)
+
+
+### Bug Fixes
+
+* a minor nomenclature change. ([17d3236](https://github.com/scribd/amazon-ecs-service-action/commit/17d32362236398aeaf738a257355934ca02129a0))
+
 # 1.0.0 (2021-08-20)
 
 
