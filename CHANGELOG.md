@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.2...v1.0.3) (2021-08-25)
+
+
+### Bug Fixes
+
+* also publish release to major branch ([929b705](https://github.com/scribd/amazon-ecs-service-action/commit/929b7055ed6420b34886606480884451310f65f8))
+
 ## [1.0.2](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.1...v1.0.2) (2021-08-20)
 
 
