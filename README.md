@@ -25,7 +25,7 @@ Create or update an ECS Service.
 
 parameter              | description                                 | default
 -----------------------|---------------------------------------------|----------
-`spec` and `spec-file` | Specify either a `spec-file` as a filename, a `spec` as a JSON string, or both. If you supply both, `spec` will naively override any top level keys in `spec-file`. You might do this if you have data coming from a previous step, as in the example below. See https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-ecs/interfaces/createservicecommandinput.html for information about how to craft a valid `spec` or `spec-file`. | {}
+`spec` and `spec-file` | Specify either a `spec-file` as a filename, a `spec` as a JSON string, or both. See notes below and https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-ecs/interfaces/createservicecommandinput.html for information about how to craft a valid `spec` or `spec-file`. | {}
 `force-new-deployment` | Whether to force a new deployment when updating the service as a boolean. | `false`
 `wait-until-tasks-running` | Whether to wait for the tasks to enter a running state. | `false`
 
@@ -49,6 +49,19 @@ parameter              | description                                 | default
     force-new-deployment: false
     wait-until-tasks-running: true
 
+```
+
+#### **A note on using both `spec-file` and `spec`**:
+
+This merge functionality is intended to provide very basic addition of simple elements to the spec-file. Please try to avoid using this effect for complicated transformations.
+
+```
+  spec-file + spec => combined-spec-data                                                   // The combined-spec-data is sent to the AWS API.
+  {"a": "b"} + {"a": "c"} => {"a": "c"}                                                    // The algorithm naiively replaces the top level keys in the combined spec.
+  {"a": "b"} + {"c": "d"} => {"a": "b", "c": "d"}                                          // If you add a key, no problem.
+  {"a": {"b": "c", "d": "e"}} + {"a": {"d": "f"}} => {"a": {"d": "f"}}                     // If you change an element in a lower level key, data is lost. Note how "b" is lost. 
+  {"a": {"b": "c", "d": "e"}} + {"a": {"b": "c", "d": "f"}} => {"a": {"b": "c", "d": "f"}} // If you change an element in a lower level key, recreate the other elements.
+  {"a": "b"} + ?????? => {}                                                                // There is no way to delete elements. 
 ```
 
 ### Service Deletion
