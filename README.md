@@ -56,12 +56,17 @@ parameter              | description                                 | default
 This merge functionality is intended to provide very basic addition of simple elements to the spec-file. Please try to avoid using this effect for complicated transformations.
 
 ```
-  spec-file + spec => combined-spec-data                                                   // The combined-spec-data is sent to the AWS API.
-  {"a": "b"} + {"a": "c"} => {"a": "c"}                                                    // The algorithm naiively replaces the top level keys in the combined spec.
-  {"a": "b"} + {"c": "d"} => {"a": "b", "c": "d"}                                          // If you add a key, no problem.
-  {"a": {"b": "c", "d": "e"}} + {"a": {"d": "f"}} => {"a": {"d": "f"}}                     // If you change an element in a lower level key, data is lost. Note how "b" is lost. 
-  {"a": {"b": "c", "d": "e"}} + {"a": {"b": "c", "d": "f"}} => {"a": {"b": "c", "d": "f"}} // If you change an element in a lower level key, recreate the other elements.
-  {"a": "b"} + ?????? => {}                                                                // There is no way to delete elements. 
+// The combined-spec-data is sent to the AWS API.
+  spec-file + spec => combined-spec-data
+// The algorithm naiively replaces the top level keys in the combined spec.
+  {"a": "b"} + {"a": "c"} => {"a": "c"}
+// If you add a key, no problem.
+  {"a": "b"} + {"c": "d"} => {"a": "b", "c": "d"}
+// If you change an element in a lower level key, data is lost. Note how "b" is lost.
+  {"a": {"b": "c", "d": "e"}} + {"a": {"d": "f"}} => {"a": {"d": "f"}}
+// If you wish to change an element in a lower level key, recreate the other elements.
+  {"a": {"b": "c", "d": "e"}} + {"a": {"b": "c", "d": "f"}} => {"a": {"b": "c", "d": "f"}}
+// Anything more complicated than this is not supported.
 ```
 
 ### Service Deletion
