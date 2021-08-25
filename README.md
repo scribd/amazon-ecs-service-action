@@ -39,7 +39,7 @@ parameter              | description                                 | default
     task-definition: some-task-definition.json
 
 - name: ECS Service
-  uses: scribd/amazon-ecs-service@master
+  uses: scribd/amazon-ecs-service-action@v1
   with:
     spec-file: examples/service-spec.json
     spec: |
@@ -83,7 +83,7 @@ parameter              | description                                 | default
 ```yaml
 
 - name: Delete ECS Service
-  uses: scribd/amazon-ecs-service@master
+  uses: scribd/amazon-ecs-service-action@v1
   with:
     spec: |
       {"cluster": "my-cluster", "serviceName": "my-service"}
@@ -94,7 +94,7 @@ parameter              | description                                 | default
 // Or just recycle the spec-file from the create-side. 
 
 - name: Delete ECS Service
-  uses: scribd/amazon-ecs-service@master
+  uses: scribd/amazon-ecs-service-action@v1
   with:
     spec-file: examples/service-spec.json
     action: delete
