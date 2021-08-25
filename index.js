@@ -573,17 +573,6 @@ function getParameters() {
     Object.assign(parameters, {spec: Object.assign({}, parameters.spec, specData)});
   }
 
-  tags = core.getInput('tags', {required: false});
-  if (tags) {
-    let tagsData;
-    try {
-      tagsData = JSON.parse(tags);
-    } catch (err) {
-      throw handleGetParameterErrors(err, 'tags', tagsData);
-    }
-    Object.assign(parameters, {tags: tagsData});
-  }
-
   const filteredParams = _.pickBy(
       parameters,
       (value, key) => {
