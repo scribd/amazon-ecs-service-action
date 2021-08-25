@@ -562,22 +562,27 @@ function getParameters() {
     Object.assign(parameters, {spec: specFileData});
   }
 
-  // JSON Parameters
-  Object.entries({
-    spec: 'spec',
-    tags: 'tags',
-  }).forEach(([key, value]) => {
-    const s = core.getInput(value, {required: false});
-    if (s) {
-      let t;
-      try {
-        t = JSON.parse(s);
-      } catch (err) {
-        throw handleGetParameterErrors(err, key, s);
-      }
-      Object.assign(parameters, {[key]: t});
+  spec = core.getInput('spec', {required: false});
+  if (spec) {
+    let specData;
+    try {
+      specData = JSON.parse(spec);
+    } catch (err) {
+      throw handleGetParameterErrors(err, 'spec', spec);
     }
-  });
+    Object.assign(parameters, {spec: Object.assign({}, parameters.spec, specData)});
+  }
+
+  tags = core.getInput('tags', {required: false});
+  if (tags) {
+    let tagsData;
+    try {
+      tagsData = JSON.parse(tags);
+    } catch (err) {
+      throw handleGetParameterErrors(err, 'tags', tagsData);
+    }
+    Object.assign(parameters, {tags: tagsData});
+  }
 
   const filteredParams = _.pickBy(
       parameters,

@@ -635,6 +635,44 @@ describe('GITHUB ACTIONS INTERFACE', () => {
       });
     });
 
+    describe('when spec-file is supplied and spec is suppled', () => {
+      test('it merges one layer', () => {
+        core.getInput = jest
+            .fn()
+            .mockReturnValueOnce('')
+            .mockReturnValueOnce('')
+            .mockReturnValueOnce('')
+            .mockReturnValueOnce('')
+            .mockReturnValueOnce('examples/service-spec.json')
+            .mockReturnValueOnce(JSON.stringify(
+                {
+                  serviceName: 'test-service',
+                },
+            ));
+
+        expect(i.getParameters()).toStrictEqual({...parameters, spec: {...parameters.spec, serviceName: 'test-service'}});
+      });
+
+      test('but overwrites two layers', () => {
+        core.getInput = jest
+            .fn()
+            .mockReturnValueOnce('')
+            .mockReturnValueOnce('')
+            .mockReturnValueOnce('')
+            .mockReturnValueOnce('')
+            .mockReturnValueOnce('examples/service-spec.json')
+            .mockReturnValueOnce(JSON.stringify(
+                {
+                  deploymentConfiguration: {
+                    maximumPercent: 200,
+                  },
+                },
+            ));
+
+        expect(i.getParameters().spec.deploymentConfiguration).toStrictEqual({maximumPercent: 200});
+      });
+    });
+
     describe('when bad path to spec-file is supplied', () => {
       test('it gets the parameters', () => {
         core.getInput = jest
