@@ -1,3 +1,11 @@
+## [1.0.4](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.3...v1.0.4) (2021-08-25)
+
+
+### Bug Fixes
+
+* remove appendix functionality for tags. ([131da9e](https://github.com/scribd/amazon-ecs-service-action/commit/131da9e3a10fac1d1c749725b29beec2c6055b1e))
+* spec and spec-file inputs are properly handled ([ec0f91b](https://github.com/scribd/amazon-ecs-service-action/commit/ec0f91b2eb71bb7599882c383752a61420141f74))
+
 ## [1.0.3](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.2...v1.0.3) (2021-08-25)
 
 
