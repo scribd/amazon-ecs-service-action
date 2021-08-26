@@ -1,3 +1,10 @@
+## [1.0.6](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.5...v1.0.6) (2021-08-26)
+
+
+### Bug Fixes
+
+* **deps:** bump @actions/core from 1.4.0 to 1.5.0 ([23d6fbe](https://github.com/scribd/amazon-ecs-service-action/commit/23d6fbe830a95a43a489b48a628ede8174970d4d))
+
 ## [1.0.5](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.4...v1.0.5) (2021-08-26)
 
 
