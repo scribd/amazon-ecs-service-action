@@ -1,3 +1,10 @@
+## [1.0.8](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.7...v1.0.8) (2021-08-26)
+
+
+### Bug Fixes
+
+* use the appropriate input parameters for waiting for task definition ([182c65c](https://github.com/scribd/amazon-ecs-service-action/commit/182c65c677d7ec3e78ba2f86305add359031795f))
+
 ## [1.0.7](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.6...v1.0.7) (2021-08-26)
 
 
