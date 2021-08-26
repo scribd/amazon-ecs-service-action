@@ -88,8 +88,8 @@ async function doWaitUntilServiceInactive(client, parameters) {
  */
 async function waitUntilTasksRunningIfCalledFor(client, parameters) {
   if (parameters.waitUntilTasksRunning) {
-    core.info('...Waiting up to one hour for tasks to enter a RUNNING state...');
-    const result = await waitUntilTasksRunning({client, maxWaitTime: 3600}, describeInput(parameters));
+    core.info('...Waiting for tasks to enter a RUNNING state (for 2 minutes)...');
+    const result = await waitUntilTasksRunning(client, describeInput(parameters));
     if (result.state === 'SUCCESS') {
       core.info('...tasks are RUNNING...');
     } else {
