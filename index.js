@@ -89,7 +89,7 @@ async function doWaitUntilServiceInactive(client, parameters) {
 async function waitUntilTasksRunningIfCalledFor(client, parameters) {
   if (parameters.waitUntilTasksRunning) {
     core.info('...Waiting for tasks to enter a RUNNING state (for 2 minutes)...');
-    const result = await waitUntilTasksRunning(client, describeInput(parameters));
+    const result = await waitUntilTasksRunning(client, describeTaskDefinitionInput(parameters));
     if (result.state === 'SUCCESS') {
       core.info('...tasks are RUNNING...');
     } else {
@@ -164,6 +164,19 @@ function describeInput(parameters) {
     services: [parameters.spec.serviceName],
   };
 }
+
+/**
+ * Filter parameters according to describeTaskDefinition API
+ * @param {Object} parameters Original parameters
+ * @return {Object} Filtered parameters
+ */
+ function describeTaskDefinitionInput(parameters) {
+  return {
+    include: ['TAGS'],
+    taskDefinition: parameters.spec.taskDefinition,
+  };
+}
+
 
 /**
  * Filter parameters according to [@aws-sdk/client-ecs/UpdateServiceCommandInput}](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-ecs/interfaces/updateservicecommandinput.html)
@@ -663,21 +676,22 @@ if (require.main === module) {
 module.exports = {
   createInput,
   createService,
-  findCreateOrUpdateService,
-  deleteService,
   deleteInput,
-  describeService,
+  deleteService,
   describeInput,
+  describeService,
+  describeTaskDefinitionInput,
+  findCreateOrUpdateService,
   findServiceInResponse,
   getParameters,
   isUpdateShapeValid,
+  NeedsReplacement,
+  NotFoundException,
   omitUndefined,
   postToGithub,
   run,
+  updateInput,
   updateNeeded,
   updateService,
-  updateInput,
   whatsTheDiff,
-  NeedsReplacement,
-  NotFoundException,
 };

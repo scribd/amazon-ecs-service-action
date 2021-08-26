@@ -74,6 +74,10 @@ const describeInput = {
   services: [mockSpec.serviceName],
 };
 
+const describeTaskDefinitionInput = {
+  taskDefinition: mockSpec.taskDefinition,
+};
+
 // https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-ecs/interfaces/updateservicecommandinput.html
 const updateInput = i.omitUndefined({
   capacityProviderStrategy: mockSpec.capacityProviderStrategy,
@@ -201,6 +205,12 @@ describe('PARAMETER CONVERSION', () => {
   describe('describeInput', () => {
     test('only returns valid elements', () => {
       expect(i.describeInput(parameters)).toStrictEqual(describeInput);
+    });
+  });
+
+  describe('describeTaskDefinitionInput', () => {
+    test('only returns valid elements', () => {
+      expect(i.describeTaskDefinitionInput(parameters)).toStrictEqual(describeTaskDefinitionInput);
     });
   });
 
