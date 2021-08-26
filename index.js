@@ -316,7 +316,9 @@ function isUpdateShapeValid(currentService, updateParams) {
 async function updateService(client, parameters) {
   const command = new UpdateServiceCommand(updateInput(parameters));
   const response = await client.send(command);
+
   await waitUntilTasksRunningIfCalledFor(client, parameters);
+
   const found = findServiceInResponse(response, parameters.spec.serviceName);
   core.info(`Updated ${parameters.spec.serviceName}.`);
   return found;
@@ -433,9 +435,11 @@ async function describeService(client, parameters) {
 async function createService(client, parameters) {
   const command = new CreateServiceCommand(createInput(parameters));
   const response = await client.send(command);
+
   await waitUntilTasksRunningIfCalledFor(client, parameters);
+
   const found = findServiceInResponse(response, parameters.spec.serviceName);
-  core.info(`Created ${parameters.spec.serviceName}.`);
+  core.info(`...created ${parameters.spec.serviceName}.`);
   return found;
 }
 
@@ -456,11 +460,13 @@ async function createService(client, parameters) {
  */
 async function handlefindCreateOrUpdateServiceErrors(client, parameters, err) {
   if (err.name === 'NotFoundException') {
-    core.info(`Unable to find ${parameters.spec.serviceName}. Creating newly.`);
+    core.info(`Unable to find ${parameters.spec.serviceName}. Creating newly...`);
     return await createService(client, parameters);
   } else if (err.name === 'Draining') {
     core.info(`Service ${parameters.spec.serviceName} is draining. Creating newly after waiting up to an hour for it to enter an INACTIVE state...`);
-    await doWaitUntilServiceInactive({client, maxWaitTime: 3600}, parameters);
+
+    await doWaitUntilServiceInactive(client, parameters);
+
     core.info('...service is now INACTIVE...');
     return await createService(client, parameters);
   } else {
@@ -490,7 +496,7 @@ async function findCreateOrUpdateService(client, parameters) {
       throw new NeedsReplacement(`The Service needs to be replaced, as the following changes cannot be made: ${JSON.stringify(_.at(updateParams, additionalKeys))}.`);
     }
   } else {
-    core.info(`Found ${parameters.spec.serviceName}. No further action needed.`);
+    core.info(`${parameters.spec.serviceName} looks good. No further action needed.`);
     return found;
   }
 }
