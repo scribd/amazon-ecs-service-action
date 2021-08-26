@@ -702,6 +702,20 @@ describe('GITHUB ACTIONS INTERFACE', () => {
       });
     });
 
+    describe('when wait-until-tasks-running is supplied', () => {
+      test('it gets the parameters', () => {
+        core.getInput = jest
+            .fn()
+            .mockReturnValueOnce('')
+            .mockReturnValueOnce('')
+            .mockReturnValueOnce('')
+            .mockReturnValueOnce('true')
+            .mockReturnValueOnce('')
+            .mockReturnValueOnce(JSON.stringify(mockSpec));
+
+        expect(i.getParameters().waitUntilTasksRunning).toBeTruthy();
+      });
+    });
 
     describe('when forceDelete is supplied', () => {
       test('it gets the parameters', () => {
