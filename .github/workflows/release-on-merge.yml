@@ -1,8 +1,6 @@
-name: Release on Merge to Main
+name: Release on Merge
 on:
   push:
-    branches:
-      - main
 jobs:
   release:
     runs-on: ubuntu-18.04
