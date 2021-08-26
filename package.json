@@ -31,7 +31,7 @@
     "yaml": "^1.10.2"
   },
   "devDependencies": {
-    "@vercel/ncc": "^0.29.0",
+    "@vercel/ncc": "^0.29.2",
     "eslint": "^7.30.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-no-floating-promise": "^1.0.2",
