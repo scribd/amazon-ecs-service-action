@@ -210,11 +210,9 @@ function deleteInput(parameters) {
 const {WaiterState, checkExceptions, createWaiter} = __nccwpck_require__(6243);
 
 async function checkState(client, parameters) {
-  core.info('... polling resource...');
   const response = await describeService(client, parameters);
   // core.debug(`checkState: response: ${JSON.stringify(response)}`);
 
-  core.info(`...task definition ${response.taskDefinition} is active...`);
   const remaining = response.deployments[0].desiredCount - response.deployments[0].runningCount;
   const state = response.deployments[0].rolloutState;
   const reason = response.deployments[0].rolloutStateReason;
@@ -238,7 +236,7 @@ async function checkState(client, parameters) {
 async function waitUntilDeploymentComplete(client, parameters) {
   if (parameters.waitUntilDeploymentComplete) {
     core.info('...Waiting for tasks to enter a RUNNING state...');
-    const result = await createWaiter({client, maxWaitTime: 3600}, parameters, checkState);
+    const result = await createWaiter({client, maxWaitTime: 3600, minDelay: 2, maxDelay: 20}, parameters, checkState);
     core.info('...all desired instances are running.');
     return checkExceptions(result);
   }

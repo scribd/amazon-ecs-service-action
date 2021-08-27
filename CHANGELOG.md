@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.0...v1.1.1) (2021-08-27)
+
+
+### Bug Fixes
+
+* reduce verbosity & increase frequency of ECS polls ([9df02e9](https://github.com/scribd/amazon-ecs-service-action/commit/9df02e9d6bd9020124e5067b7e67c98b85d857be))
+
 # [1.1.0](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.8...v1.1.0) (2021-08-27)
 
 
