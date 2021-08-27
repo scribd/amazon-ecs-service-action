@@ -1,6 +1,8 @@
 const core = require('@actions/core');
 const fs = require('fs');
-const {ECSClient, CreateServiceCommand, DescribeServicesCommand, UpdateServiceCommand, DeleteServiceCommand, waitUntilServicesInactive, waitUntilTasksRunning} = require('@aws-sdk/client-ecs');
+
+const {ECSClient, CreateServiceCommand, DescribeServicesCommand, UpdateServiceCommand, DeleteServiceCommand, waitUntilServicesInactive, waitUntilTasksRunning, ListTasksCommand, DescribeTasksCommand} = require('@aws-sdk/client-ecs');
+
 const _ = require('lodash');
 
 
@@ -56,45 +58,6 @@ class NeedsReplacement extends Error {
     this.name = 'NeedsReplacement';
     this.message = message;
     this.stack = (new Error()).stack;
-  }
-}
-
-
-/**
- *
- * WAITERS
- *
- *****************************************************************************************/
-
-/**
- * Wait for Service to become INACTIVE.
- * @param {@aws-sdk/client-ecs/ECSClient} client client
- * @param {Object} parameters Original parameters
- */
-async function doWaitUntilServiceInactive(client, parameters) {
-  core.info('...Waiting up to one hour for service to become INACTIVE...');
-  const result = await waitUntilServicesInactive({client, maxWaitTime: 3600}, describeInput(parameters));
-  if (result.state === 'SUCCESS') {
-    core.info('...service is INACTIVE...');
-  } else {
-    throw new Error(`Service ${parameters.spec.serviceName} failed to delete: ${JSON.stringify(result)}`);
-  }
-}
-
-/**
- * Wait for Tasks to become RUNNING.
- * @param {@aws-sdk/client-ecs/ECSClient} client client
- * @param {Object} parameters Original parameters
- */
-async function waitUntilTasksRunningIfCalledFor(client, parameters) {
-  if (parameters.waitUntilTasksRunning) {
-    core.info('...Waiting for tasks to enter a RUNNING state (for 2 minutes)...');
-    const result = await waitUntilTasksRunning(client, describeTaskDefinitionInput(parameters));
-    if (result.state === 'SUCCESS') {
-      core.info('...tasks are RUNNING...');
-    } else {
-      throw new Error(`Tasks ${parameters.spec.serviceName} failed to start: ${JSON.stringify(result)}`);
-    }
   }
 }
 
@@ -165,18 +128,6 @@ function describeInput(parameters) {
   };
 }
 
-/**
- * Filter parameters according to describeTaskDefinition API
- * @param {Object} parameters Original parameters
- * @return {Object} Filtered parameters
- */
- function describeTaskDefinitionInput(parameters) {
-  return {
-    include: ['TAGS'],
-    taskDefinition: parameters.spec.taskDefinition,
-  };
-}
-
 
 /**
  * Filter parameters according to [@aws-sdk/client-ecs/UpdateServiceCommandInput}](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-ecs/interfaces/updateservicecommandinput.html)
@@ -221,9 +172,175 @@ function deleteInput(parameters) {
 
 /**
  *
+ * waitUntilTasksRunning
+ *
+ *****************************************************************************************/
+
+const {WaiterState, checkExceptions, createWaiter} = require('@aws-sdk/util-waiter');
+
+async function checkState(client, parameters) {
+  let reason;
+  let response;
+
+  try {
+    core.info('... polling resource...');
+    response = await describeService(client, parameters);
+    reason = response.desiredCount - response.runningCount;
+  } catch (err) {
+    if (err.name == 'NotFoundException') {
+      core.info('... and it is missing ...');
+      reason = 'MISSING';
+    } else {
+      throw err;
+    }
+  }
+
+  if (reason === 0) {
+    return {state: WaiterState.SUCCESS, response};
+  }
+  if (reason > 0) {
+    return {state: WaiterState.RETRY, response};
+  }
+  return {state: WaiterState.FAILURE, response};
+};
+
+async function waitUntilServiceFullyRunning(client, parameters) {
+  core.info('Waiting for resource to be stable...');
+  const serviceDefaults = {minDelay: 15, maxDelay: 120, maxWaitTime: 300};
+  const result = await createWaiter({...serviceDefaults, client: {...client}}, parameters, checkState);
+  core.info('...all desired instances are running.');
+  return checkExceptions(result);
+};
+
+
+/**
+ * @param {@aws-sdk/client-ecs/Task} task task
+ * @param {Object} parameters Original parameters
+ * @return {Boolean}
+ */
+function isCurrentTaskDefinition(task, parameters) {
+  return task.taskDefinitionArn === parameters.spec.taskDefinition;
+}
+
+function handleDescribeTasksErrors(response) {
+  if (hasMissingFailure(response)) {
+    throw new Error(`Tasks not found.`);
+  }
+  if (hasOtherFailures(response)) {
+    throw new Error(`Finding tasks has failures. See: ${JSON.stringify(response)}`);
+  }
+}
+
+/**
+ * Filters the taskArns from the response,
+ * returning only those taskArns that match the current taskDefinition
+ * @param {@aws-sdk/client-ecs/ECSClient} client client
+ * @param {@aws-sdk/client-ecs/DescribeTasksCommandInput} input input
+ * @param {Object} parameters Original parameters
+ * @return {@aws-sdk/client-ecs/DescribeTasksCommandInput} filtered input
+ */
+async function findTasksForThisSpecificTaskDefinition(client, input, parameters) {
+  const command = new DescribeTasksCommand(input);
+  const response = await client.send(command);
+  core.debug(`findTasksForThisSpecificTaskDefinition: These tasks are currently assigned to this service: ${JSON.stringify(response.tasks)}`);
+  handleDescribeTasksErrors(response);
+  const tasks = _.filter(response.tasks, function(task) {
+    return isCurrentTaskDefinition(task, parameters);
+  });
+  const filteredTasks = _.map(tasks, function(task) {
+    return task.taskArn;
+  });
+  core.debug(`findTasksForThisSpecificTaskDefinition: Will wait on these tasks to startup: ${JSON.stringify(filteredTasks)}`);
+  return {...input, tasks: filteredTasks};
+};
+
+/**
+ * Filter parameters according to listTasks API
+ * @param {Object} parameters Original parameters
+ * @return {Object} Filtered parameters
+ */
+function listTasksInput(parameters) {
+  return {
+    cluster: parameters.spec.cluster,
+    launchType: parameters.spec.launchType,
+    maxResults: 100,
+    serviceName: parameters.spec.serviceName,
+  };
+}
+
+function hasTasks(response) {
+  return response.taskArns && response.taskArns.length > 0;
+}
+
+function handlefindTasksInResponseErrors(response) {
+  if (hasMissingFailure(response) || !hasTasks(response)) {
+    throw new Error(`Tasks not found.`);
+  }
+  if (hasOtherFailures(response)) {
+    throw new Error(`Finding tasks has failures. See: ${JSON.stringify(response)}`);
+  }
+}
+
+/**
+ * Find the tasks for this service
+ * @param {@aws-sdk/client-ecs/ECSClient} client client
+ * @param {Object} parameters Original parameters
+ * @return {String[]} List of task ARNs
+ */
+async function listTasks(client, parameters) {
+  const command = new ListTasksCommand(listTasksInput(parameters));
+  const response = await client.send(command);
+  handlefindTasksInResponseErrors(response);
+  return response.taskArns;
+}
+
+/**
+ * Filter parameters according to describeTaskDefinition API
+ * @param {@aws-sdk/client-ecs/ECSClient} client client
+ * @param {Object} parameters Original parameters
+ * @return {Object} Filtered parameters
+ */
+async function describeTasksInput(client, parameters) {
+  return {
+    cluster: parameters.spec.cluster,
+    include: ['TAGS'],
+    tasks: await listTasks(client, parameters),
+  };
+}
+
+/**
+ * Wait for Tasks to become RUNNING.
+ * @param {@aws-sdk/client-ecs/ECSClient} client client
+ * @param {Object} parameters Original parameters
+ */
+async function waitUntilTasksRunningIfCalledFor(client, parameters) {
+  if (parameters.waitUntilTasksRunning) {
+    core.info('...Waiting for tasks to enter a RUNNING state...');
+    await waitUntilServiceFullyRunning(client, parameters);
+  }
+}
+
+
+/**
+ *
  * DELETE
  *
  *****************************************************************************************/
+
+/**
+ * Wait for Service to become INACTIVE.
+ * @param {@aws-sdk/client-ecs/ECSClient} client client
+ * @param {Object} parameters Original parameters
+ */
+async function doWaitUntilServiceInactive(client, parameters) {
+  core.info('...Waiting up to one hour for service to become INACTIVE...');
+  const result = await waitUntilServicesInactive({client, maxWaitTime: 3600}, describeInput(parameters));
+  if (result.state === 'SUCCESS') {
+    core.info('...service is INACTIVE...');
+  } else {
+    throw new Error(`Service ${parameters.spec.serviceName} failed to delete: ${JSON.stringify(result)}`);
+  }
+}
 
 /**
  * Delete Service or throw an error
@@ -634,14 +751,26 @@ async function run() {
     customUserAgent: 'amazon-ecs-service-for-github-actions',
   });
 
-  client.middlewareStack.add((next, context) => (args) => {
-    core.debug(`Middleware sending ${context.commandName} to ${context.clientName} with: ${JSON.stringify(args.request)}`);
-    return next(args);
-  },
-  {
-    step: 'build', // add to `finalize` or `deserialize` for greater verbosity
-  },
-  );
+
+  const plugin = {
+    applyToStack: (stack) => {
+      // Middleware added to mark start and end of an complete API call.
+      stack.add(
+          (next, context) => async (args) => {
+            const start = process.hrtime.bigint();
+            core.debug(`${context.commandName} to ${context.clientName} sending: ${JSON.stringify(args)}`);
+            const result = await next(args);
+            const end = process.hrtime.bigint();
+            core.debug(`${context.commandName} to ${context.clientName} received: ${JSON.stringify(result.output)}`);
+            core.debug(`API call round trip uses ${Number(end - start) / 1_000_000} milliseconds`);
+            return result;
+          },
+          {tags: ['ROUND_TRIP']},
+      );
+    },
+  };
+
+  client.middlewareStack.use(plugin);
 
   // Get input parameters
   const parameters = getParameters();
@@ -680,11 +809,15 @@ module.exports = {
   deleteService,
   describeInput,
   describeService,
-  describeTaskDefinitionInput,
+  describeTasksInput,
   findCreateOrUpdateService,
   findServiceInResponse,
+  findTasksForThisSpecificTaskDefinition,
   getParameters,
+  isCurrentTaskDefinition,
   isUpdateShapeValid,
+  listTasks,
+  listTasksInput,
   NeedsReplacement,
   NotFoundException,
   omitUndefined,
@@ -693,5 +826,6 @@ module.exports = {
   updateInput,
   updateNeeded,
   updateService,
+  waitUntilServiceFullyRunning,
   whatsTheDiff,
 };

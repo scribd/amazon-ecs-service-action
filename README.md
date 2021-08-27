@@ -131,11 +131,21 @@ This action requires the following minimum set of permissions:
         "ecs:UpdateService",
         "ecs:DescribeServices",
         "ecs:DeleteService",
-        "ecs:CreateService"
+        "ecs:CreateService",
+        "ecs:ListTasks"
       ],
       "Resource":[
         "arn:aws:ecs:us-east-1:1234567890:mesh/my-mesh/virtualServicer/my-virtual-servicer/service/my-service"
       ]
+    },
+    {
+      "Sid":"ListTasks",
+      "Effect":"Allow",
+      "Action":[
+        "ecs:ListTasks",
+        "ecs:DescribeTasks"
+      ],
+      "Resource": "*"
     }
   ]
 }

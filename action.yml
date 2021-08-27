@@ -31,6 +31,11 @@ inputs:
     
     true | [false]'
     required: false
+  wait-until-tasks-running:
+    description: 'If set with any value, will wait until the tasks return with a RUNNING state.
+
+    true | [undefined]'
+    required: false
 outputs:
   arn:
     description: 'The ARN of the Service'
