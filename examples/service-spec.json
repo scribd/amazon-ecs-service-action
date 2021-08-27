@@ -41,6 +41,6 @@
       "value": "my-value"
     }
   ],
-  "taskDefinition": "task-definition-family:123",
+  "taskDefinition": "arn:aws:ecs:us-east-1:1234567890:task-definition/task-definition-family:2",
   "cluster": "my-cluster"
 }
