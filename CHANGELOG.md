@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.8...v1.1.0) (2021-08-27)
+
+
+### Features
+
+* allow `wait-until-deployment-complete` option.  ([f45efa3](https://github.com/scribd/amazon-ecs-service-action/commit/f45efa35a041d47ffeb574d9b18aa19855321ba9))
+
 ## [1.0.8](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.7...v1.0.8) (2021-08-26)
 
 

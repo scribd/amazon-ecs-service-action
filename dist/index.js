@@ -28,9 +28,12 @@ module.exports = JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SD
 /***/ 2932:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
+/* module decorator */ module = __nccwpck_require__.nmd(module);
 const core = __nccwpck_require__(2186);
 const fs = __nccwpck_require__(5747);
-const {ECSClient, CreateServiceCommand, DescribeServicesCommand, UpdateServiceCommand, DeleteServiceCommand, waitUntilServicesInactive, waitUntilTasksRunning} = __nccwpck_require__(4786);
+
+const {ECSClient, CreateServiceCommand, DescribeServicesCommand, UpdateServiceCommand, DeleteServiceCommand, waitUntilServicesInactive, ListTasksCommand, DescribeTasksCommand} = __nccwpck_require__(4786);
+
 const _ = __nccwpck_require__(250);
 
 
@@ -86,45 +89,6 @@ class NeedsReplacement extends Error {
     this.name = 'NeedsReplacement';
     this.message = message;
     this.stack = (new Error()).stack;
-  }
-}
-
-
-/**
- *
- * WAITERS
- *
- *****************************************************************************************/
-
-/**
- * Wait for Service to become INACTIVE.
- * @param {@aws-sdk/client-ecs/ECSClient} client client
- * @param {Object} parameters Original parameters
- */
-async function doWaitUntilServiceInactive(client, parameters) {
-  core.info('...Waiting up to one hour for service to become INACTIVE...');
-  const result = await waitUntilServicesInactive({client, maxWaitTime: 3600}, describeInput(parameters));
-  if (result.state === 'SUCCESS') {
-    core.info('...service is INACTIVE...');
-  } else {
-    throw new Error(`Service ${parameters.spec.serviceName} failed to delete: ${JSON.stringify(result)}`);
-  }
-}
-
-/**
- * Wait for Tasks to become RUNNING.
- * @param {@aws-sdk/client-ecs/ECSClient} client client
- * @param {Object} parameters Original parameters
- */
-async function waitUntilTasksRunningIfCalledFor(client, parameters) {
-  if (parameters.waitUntilTasksRunning) {
-    core.info('...Waiting for tasks to enter a RUNNING state (for 2 minutes)...');
-    const result = await waitUntilTasksRunning(client, describeTaskDefinitionInput(parameters));
-    if (result.state === 'SUCCESS') {
-      core.info('...tasks are RUNNING...');
-    } else {
-      throw new Error(`Tasks ${parameters.spec.serviceName} failed to start: ${JSON.stringify(result)}`);
-    }
   }
 }
 
@@ -195,18 +159,6 @@ function describeInput(parameters) {
   };
 }
 
-/**
- * Filter parameters according to describeTaskDefinition API
- * @param {Object} parameters Original parameters
- * @return {Object} Filtered parameters
- */
- function describeTaskDefinitionInput(parameters) {
-  return {
-    include: ['TAGS'],
-    taskDefinition: parameters.spec.taskDefinition,
-  };
-}
-
 
 /**
  * Filter parameters according to [@aws-sdk/client-ecs/UpdateServiceCommandInput}](https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-ecs/interfaces/updateservicecommandinput.html)
@@ -251,9 +203,68 @@ function deleteInput(parameters) {
 
 /**
  *
+ * waitUntilDeploymentComplete
+ *
+ *****************************************************************************************/
+
+const {WaiterState, checkExceptions, createWaiter} = __nccwpck_require__(6243);
+
+async function checkState(client, parameters) {
+  core.info('... polling resource...');
+  const response = await describeService(client, parameters);
+  // core.debug(`checkState: response: ${JSON.stringify(response)}`);
+
+  core.info(`...task definition ${response.taskDefinition} is active...`);
+  const remaining = response.deployments[0].desiredCount - response.deployments[0].runningCount;
+  const state = response.deployments[0].rolloutState;
+  const reason = response.deployments[0].rolloutStateReason;
+  core.info(`...${reason}: ${remaining} containers remaining to be created...`);
+
+
+  if (state === 'COMPLETED') {
+    return {state: WaiterState.SUCCESS, reason};
+  }
+  if (state === 'IN_PROGRESS') {
+    return {state: WaiterState.RETRY, reason};
+  }
+  return {state: WaiterState.FAILURE, reason};
+};
+
+/**
+ * Wait for Tasks to become RUNNING.
+ * @param {@aws-sdk/client-ecs/ECSClient} client client
+ * @param {Object} parameters Original parameters
+ */
+async function waitUntilDeploymentComplete(client, parameters) {
+  if (parameters.waitUntilDeploymentComplete) {
+    core.info('...Waiting for tasks to enter a RUNNING state...');
+    const result = await createWaiter({client, maxWaitTime: 3600}, parameters, checkState);
+    core.info('...all desired instances are running.');
+    return checkExceptions(result);
+  }
+}
+
+
+/**
+ *
  * DELETE
  *
  *****************************************************************************************/
+
+/**
+ * Wait for Service to become INACTIVE.
+ * @param {@aws-sdk/client-ecs/ECSClient} client client
+ * @param {Object} parameters Original parameters
+ */
+async function doWaitUntilServiceInactive(client, parameters) {
+  core.info('...Waiting up to one hour for service to become INACTIVE...');
+  const result = await waitUntilServicesInactive({client, maxWaitTime: 3600}, describeInput(parameters));
+  if (result.state === 'SUCCESS') {
+    core.info('...service is INACTIVE...');
+  } else {
+    throw new Error(`Service ${parameters.spec.serviceName} failed to delete: ${JSON.stringify(result)}`);
+  }
+}
 
 /**
  * Delete Service or throw an error
@@ -360,7 +371,7 @@ async function updateService(client, parameters) {
   const command = new UpdateServiceCommand(updateInput(parameters));
   const response = await client.send(command);
 
-  await waitUntilTasksRunningIfCalledFor(client, parameters);
+  await waitUntilDeploymentComplete(client, parameters);
 
   const found = findServiceInResponse(response, parameters.spec.serviceName);
   core.info(`Updated ${parameters.spec.serviceName}.`);
@@ -479,7 +490,7 @@ async function createService(client, parameters) {
   const command = new CreateServiceCommand(createInput(parameters));
   const response = await client.send(command);
 
-  await waitUntilTasksRunningIfCalledFor(client, parameters);
+  await waitUntilDeploymentComplete(client, parameters);
 
   const found = findServiceInResponse(response, parameters.spec.serviceName);
   core.info(`...created ${parameters.spec.serviceName}.`);
@@ -596,7 +607,7 @@ function getParameters() {
     action: core.getInput('action', {required: false}) || 'create', // create or delete
     forceNewDeployment: core.getInput('force-new-deployment', {required: false}), // for update only
     forceDelete: core.getInput('force-delete', {required: false}), // for delete only
-    waitUntilTasksRunning: core.getInput('wait-until-tasks-running', {required: false}), // for create or update only
+    waitUntilDeploymentComplete: core.getInput('wait-until-deployment-complete', {required: false}), // for create or update only
   };
 
   specFile = core.getInput('spec-file', {required: false});
@@ -664,14 +675,26 @@ async function run() {
     customUserAgent: 'amazon-ecs-service-for-github-actions',
   });
 
-  client.middlewareStack.add((next, context) => (args) => {
-    core.debug(`Middleware sending ${context.commandName} to ${context.clientName} with: ${JSON.stringify(args.request)}`);
-    return next(args);
-  },
-  {
-    step: 'build', // add to `finalize` or `deserialize` for greater verbosity
-  },
-  );
+
+  const plugin = {
+    applyToStack: (stack) => {
+      // Middleware added to mark start and end of an complete API call.
+      stack.add(
+          (next, context) => async (args) => {
+            const start = process.hrtime.bigint();
+            core.debug(`${context.commandName} to ${context.clientName} sending: ${JSON.stringify(args)}`);
+            const result = await next(args);
+            const end = process.hrtime.bigint();
+            // core.debug(`${context.commandName} to ${context.clientName} received: ${JSON.stringify(result.output)}`);
+            core.debug(`API call round trip uses ${Number(end - start) / 1_000_000} milliseconds`);
+            return result;
+          },
+          {tags: ['ROUND_TRIP']},
+      );
+    },
+  };
+
+  client.middlewareStack.use(plugin);
 
   // Get input parameters
   const parameters = getParameters();
@@ -691,7 +714,7 @@ async function run() {
 
 
 /* istanbul ignore next */
-if (require.main === require.cache[eval('__filename')]) {
+if (__nccwpck_require__.c[__nccwpck_require__.s] === module) {
   run().catch((err) => {
     core.debug(`Received error: ${JSON.stringify(err)}`);
     const httpStatusCode = err.$metadata ? err.$metadata.httpStatusCode : undefined;
@@ -710,7 +733,6 @@ module.exports = {
   deleteService,
   describeInput,
   describeService,
-  describeTaskDefinitionInput,
   findCreateOrUpdateService,
   findServiceInResponse,
   getParameters,
@@ -723,6 +745,7 @@ module.exports = {
   updateInput,
   updateNeeded,
   updateService,
+  waitUntilDeploymentComplete,
   whatsTheDiff,
 };
 
@@ -48579,6 +48602,9 @@ module.exports = require("url");
 /******/ 		return module.exports;
 /******/ 	}
 /******/ 	
+/******/ 	// expose the module cache
+/******/ 	__nccwpck_require__.c = __webpack_module_cache__;
+/******/ 	
 /************************************************************************/
 /******/ 	/* webpack/runtime/node module decorator */
 /******/ 	(() => {
@@ -48595,10 +48621,10 @@ module.exports = require("url");
 /******/ 	
 /************************************************************************/
 /******/ 	
+/******/ 	// module cache are used so entry inlining is disabled
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(2932);
+/******/ 	var __webpack_exports__ = __nccwpck_require__(__nccwpck_require__.s = 2932);
 /******/ 	module.exports = __webpack_exports__;
 /******/ 	
 /******/ })()
