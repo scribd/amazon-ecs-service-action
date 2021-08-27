@@ -238,7 +238,7 @@ async function checkState(client, parameters) {
 async function waitUntilDeploymentComplete(client, parameters) {
   if (parameters.waitUntilDeploymentComplete) {
     core.info('...Waiting for tasks to enter a RUNNING state...');
-    const result = await createWaiter({client, maxWaitTime: 300}, parameters, checkState);
+    const result = await createWaiter({client, maxWaitTime: 3600}, parameters, checkState);
     core.info('...all desired instances are running.');
     return checkExceptions(result);
   }

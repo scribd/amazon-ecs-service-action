@@ -1,3 +1,10 @@
+## [1.0.9-alpha.2](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.9-alpha.1...v1.0.9-alpha.2) (2021-08-27)
+
+
+### Bug Fixes
+
+* release v1.0.9-alpha.2 ([0ae9b16](https://github.com/scribd/amazon-ecs-service-action/commit/0ae9b16a5873a7086c2e1ce299822fbb6729fd53))
+
 ## [1.0.9-alpha.1](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.8...v1.0.9-alpha.1) (2021-08-27)
 
 
