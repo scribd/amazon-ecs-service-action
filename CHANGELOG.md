@@ -1,3 +1,10 @@
+## [1.0.9-alpha.1](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.8...v1.0.9-alpha.1) (2021-08-27)
+
+
+### Bug Fixes
+
+* use a custom waiter to wait on the deployment ([74ba201](https://github.com/scribd/amazon-ecs-service-action/commit/74ba201ee46112bb84ef7f9f257aedcfffa1437c))
+
 ## [1.0.8](https://github.com/scribd/amazon-ecs-service-action/compare/v1.0.7...v1.0.8) (2021-08-26)
 
 
