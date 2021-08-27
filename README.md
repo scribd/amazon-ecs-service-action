@@ -27,7 +27,7 @@ parameter              | description                                 | default
 -----------------------|---------------------------------------------|----------
 `spec` and `spec-file` | Specify either a `spec-file` as a filename, a `spec` as a JSON string, or both. See notes below and https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/clients/client-ecs/interfaces/createservicecommandinput.html for information about how to craft a valid `spec` or `spec-file`. | {}
 `force-new-deployment` | Whether to force a new deployment when updating the service as a boolean. | `false`
-`wait-until-deployment-complete` | Whether to wait for the tasks to enter a running state. | `false`
+`wait-until-deployment-complete` | Whether to wait for the deployment to complete. | `false`
 
 
 ```yaml
