@@ -1,7 +1,7 @@
 const core = require('@actions/core');
 const fs = require('fs');
 
-const {ECSClient, CreateServiceCommand, DescribeServicesCommand, UpdateServiceCommand, DeleteServiceCommand, waitUntilServicesInactive, waitUntilTasksRunning, ListTasksCommand, DescribeTasksCommand} = require('@aws-sdk/client-ecs');
+const {ECSClient, CreateServiceCommand, DescribeServicesCommand, UpdateServiceCommand, DeleteServiceCommand, waitUntilServicesInactive, ListTasksCommand, DescribeTasksCommand} = require('@aws-sdk/client-ecs');
 
 const _ = require('lodash');
 
@@ -172,151 +172,44 @@ function deleteInput(parameters) {
 
 /**
  *
- * waitUntilTasksRunning
+ * waitUntilDeploymentComplete
  *
  *****************************************************************************************/
 
 const {WaiterState, checkExceptions, createWaiter} = require('@aws-sdk/util-waiter');
 
 async function checkState(client, parameters) {
-  let reason;
-  let response;
+  core.info('... polling resource...');
+  const response = await describeService(client, parameters);
+  // core.debug(`checkState: response: ${JSON.stringify(response)}`);
 
-  try {
-    core.info('... polling resource...');
-    response = await describeService(client, parameters);
-    reason = response.desiredCount - response.runningCount;
-  } catch (err) {
-    if (err.name == 'NotFoundException') {
-      core.info('... and it is missing ...');
-      reason = 'MISSING';
-    } else {
-      throw err;
-    }
-  }
+  core.info(`...task definition ${response.taskDefinition} is active...`);
+  const remaining = response.deployments[0].desiredCount - response.deployments[0].runningCount;
+  const state = response.deployments[0].rolloutState;
+  const reason = response.deployments[0].rolloutStateReason;
+  core.info(`...${reason}: ${remaining} containers remaining to be created...`);
 
-  if (reason === 0) {
-    return {state: WaiterState.SUCCESS, response};
+
+  if (state === 'COMPLETED') {
+    return {state: WaiterState.SUCCESS, reason};
   }
-  if (reason > 0) {
-    return {state: WaiterState.RETRY, response};
+  if (state === 'IN_PROGRESS') {
+    return {state: WaiterState.RETRY, reason};
   }
-  return {state: WaiterState.FAILURE, response};
+  return {state: WaiterState.FAILURE, reason};
 };
-
-async function waitUntilServiceFullyRunning(client, parameters) {
-  core.info('Waiting for resource to be stable...');
-  const serviceDefaults = {minDelay: 15, maxDelay: 120, maxWaitTime: 300};
-  const result = await createWaiter({...serviceDefaults, client: {...client}}, parameters, checkState);
-  core.info('...all desired instances are running.');
-  return checkExceptions(result);
-};
-
-
-/**
- * @param {@aws-sdk/client-ecs/Task} task task
- * @param {Object} parameters Original parameters
- * @return {Boolean}
- */
-function isCurrentTaskDefinition(task, parameters) {
-  return task.taskDefinitionArn === parameters.spec.taskDefinition;
-}
-
-function handleDescribeTasksErrors(response) {
-  if (hasMissingFailure(response)) {
-    throw new Error(`Tasks not found.`);
-  }
-  if (hasOtherFailures(response)) {
-    throw new Error(`Finding tasks has failures. See: ${JSON.stringify(response)}`);
-  }
-}
-
-/**
- * Filters the taskArns from the response,
- * returning only those taskArns that match the current taskDefinition
- * @param {@aws-sdk/client-ecs/ECSClient} client client
- * @param {@aws-sdk/client-ecs/DescribeTasksCommandInput} input input
- * @param {Object} parameters Original parameters
- * @return {@aws-sdk/client-ecs/DescribeTasksCommandInput} filtered input
- */
-async function findTasksForThisSpecificTaskDefinition(client, input, parameters) {
-  const command = new DescribeTasksCommand(input);
-  const response = await client.send(command);
-  core.debug(`findTasksForThisSpecificTaskDefinition: These tasks are currently assigned to this service: ${JSON.stringify(response.tasks)}`);
-  handleDescribeTasksErrors(response);
-  const tasks = _.filter(response.tasks, function(task) {
-    return isCurrentTaskDefinition(task, parameters);
-  });
-  const filteredTasks = _.map(tasks, function(task) {
-    return task.taskArn;
-  });
-  core.debug(`findTasksForThisSpecificTaskDefinition: Will wait on these tasks to startup: ${JSON.stringify(filteredTasks)}`);
-  return {...input, tasks: filteredTasks};
-};
-
-/**
- * Filter parameters according to listTasks API
- * @param {Object} parameters Original parameters
- * @return {Object} Filtered parameters
- */
-function listTasksInput(parameters) {
-  return {
-    cluster: parameters.spec.cluster,
-    launchType: parameters.spec.launchType,
-    maxResults: 100,
-    serviceName: parameters.spec.serviceName,
-  };
-}
-
-function hasTasks(response) {
-  return response.taskArns && response.taskArns.length > 0;
-}
-
-function handlefindTasksInResponseErrors(response) {
-  if (hasMissingFailure(response) || !hasTasks(response)) {
-    throw new Error(`Tasks not found.`);
-  }
-  if (hasOtherFailures(response)) {
-    throw new Error(`Finding tasks has failures. See: ${JSON.stringify(response)}`);
-  }
-}
-
-/**
- * Find the tasks for this service
- * @param {@aws-sdk/client-ecs/ECSClient} client client
- * @param {Object} parameters Original parameters
- * @return {String[]} List of task ARNs
- */
-async function listTasks(client, parameters) {
-  const command = new ListTasksCommand(listTasksInput(parameters));
-  const response = await client.send(command);
-  handlefindTasksInResponseErrors(response);
-  return response.taskArns;
-}
-
-/**
- * Filter parameters according to describeTaskDefinition API
- * @param {@aws-sdk/client-ecs/ECSClient} client client
- * @param {Object} parameters Original parameters
- * @return {Object} Filtered parameters
- */
-async function describeTasksInput(client, parameters) {
-  return {
-    cluster: parameters.spec.cluster,
-    include: ['TAGS'],
-    tasks: await listTasks(client, parameters),
-  };
-}
 
 /**
  * Wait for Tasks to become RUNNING.
  * @param {@aws-sdk/client-ecs/ECSClient} client client
  * @param {Object} parameters Original parameters
  */
-async function waitUntilTasksRunningIfCalledFor(client, parameters) {
-  if (parameters.waitUntilTasksRunning) {
+async function waitUntilDeploymentComplete(client, parameters) {
+  if (parameters.waitUntilDeploymentComplete) {
     core.info('...Waiting for tasks to enter a RUNNING state...');
-    await waitUntilServiceFullyRunning(client, parameters);
+    const result = await createWaiter({client, maxWaitTime: 300}, parameters, checkState);
+    core.info('...all desired instances are running.');
+    return checkExceptions(result);
   }
 }
 
@@ -447,7 +340,7 @@ async function updateService(client, parameters) {
   const command = new UpdateServiceCommand(updateInput(parameters));
   const response = await client.send(command);
 
-  await waitUntilTasksRunningIfCalledFor(client, parameters);
+  await waitUntilDeploymentComplete(client, parameters);
 
   const found = findServiceInResponse(response, parameters.spec.serviceName);
   core.info(`Updated ${parameters.spec.serviceName}.`);
@@ -566,7 +459,7 @@ async function createService(client, parameters) {
   const command = new CreateServiceCommand(createInput(parameters));
   const response = await client.send(command);
 
-  await waitUntilTasksRunningIfCalledFor(client, parameters);
+  await waitUntilDeploymentComplete(client, parameters);
 
   const found = findServiceInResponse(response, parameters.spec.serviceName);
   core.info(`...created ${parameters.spec.serviceName}.`);
@@ -683,7 +576,7 @@ function getParameters() {
     action: core.getInput('action', {required: false}) || 'create', // create or delete
     forceNewDeployment: core.getInput('force-new-deployment', {required: false}), // for update only
     forceDelete: core.getInput('force-delete', {required: false}), // for delete only
-    waitUntilTasksRunning: core.getInput('wait-until-tasks-running', {required: false}), // for create or update only
+    waitUntilDeploymentComplete: core.getInput('wait-until-deployment-complete', {required: false}), // for create or update only
   };
 
   specFile = core.getInput('spec-file', {required: false});
@@ -761,7 +654,7 @@ async function run() {
             core.debug(`${context.commandName} to ${context.clientName} sending: ${JSON.stringify(args)}`);
             const result = await next(args);
             const end = process.hrtime.bigint();
-            core.debug(`${context.commandName} to ${context.clientName} received: ${JSON.stringify(result.output)}`);
+            // core.debug(`${context.commandName} to ${context.clientName} received: ${JSON.stringify(result.output)}`);
             core.debug(`API call round trip uses ${Number(end - start) / 1_000_000} milliseconds`);
             return result;
           },
@@ -809,15 +702,10 @@ module.exports = {
   deleteService,
   describeInput,
   describeService,
-  describeTasksInput,
   findCreateOrUpdateService,
   findServiceInResponse,
-  findTasksForThisSpecificTaskDefinition,
   getParameters,
-  isCurrentTaskDefinition,
   isUpdateShapeValid,
-  listTasks,
-  listTasksInput,
   NeedsReplacement,
   NotFoundException,
   omitUndefined,
@@ -826,6 +714,6 @@ module.exports = {
   updateInput,
   updateNeeded,
   updateService,
-  waitUntilServiceFullyRunning,
+  waitUntilDeploymentComplete,
   whatsTheDiff,
 };

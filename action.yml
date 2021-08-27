@@ -31,7 +31,7 @@ inputs:
     
     true | [false]'
     required: false
-  wait-until-tasks-running:
+  wait-until-deployment-complete:
     description: 'If set with any value, will wait until the tasks return with a RUNNING state.
 
     true | [undefined]'

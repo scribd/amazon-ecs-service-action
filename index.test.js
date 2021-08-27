@@ -6,7 +6,7 @@ const core = require('@actions/core');
 
 jest.mock('@aws-sdk/client-ecs');
 const {ECSClient, UpdateServiceCommand, DeleteServiceCommand} = require('@aws-sdk/client-ecs');
-const {waitUntilServicesInactive, waitUntilTasksRunning} = require('@aws-sdk/client-ecs');
+const {waitUntilServicesInactive} = require('@aws-sdk/client-ecs');
 
 /**
  *
@@ -62,7 +62,7 @@ const parameters = {
   action: 'create',
   // forceNewDeployment: undefined,
   // forceDelete: undefined,
-  // waitUntilTasksRunning: undefined,
+  // waitUntilDeploymentComplete: undefined,
 };
 
 const createInput = mockSpec;
@@ -72,18 +72,6 @@ const describeInput = {
   cluster: mockSpec.cluster,
   include: ['TAGS'],
   services: [mockSpec.serviceName],
-};
-
-const listTasksInput = {
-  cluster: mockSpec.cluster,
-  // containerInstance: undefined,
-  // desiredStatus: 'RUNNING',
-  // family: 'task-definition-family',
-  launchType: mockSpec.launchType,
-  maxResults: 100,
-  // nextToken: undefined,
-  serviceName: mockSpec.serviceName,
-  // startedBy: undefined,
 };
 
 
@@ -125,7 +113,23 @@ const createdOrFoundService = i.omitUndefined(
       clusterArn: 'arn:aws:ecs:us-east-1:1234567890:cluster/my-cluster',
       createdAt: new Date(),
       createdBy: 'arn:aws:iam:us-east-1:1234567890:role/my-role',
-      deployments: [],
+      deployments: [
+        {
+          createdAt: '2021-08-27T00:01:00.001Z',
+          desiredCount: 1,
+          failedTasks: 0,
+          id: 'ecs-svc/12345',
+          launchType: 'EC2',
+          networkConfiguration: mockSpec.networkConfiguration,
+          pendingCount: 0,
+          rolloutState: 'IN_PROGRESS',
+          rolloutStateReason: 'ECS deployment ecs-svc/12345 in progress.',
+          runningCount: 0,
+          status: 'PRIMARY',
+          taskDefinition: mockSpec.taskDefinition,
+          updatedAt: '2021-08-27T00:01:01.001Z',
+        },
+      ],
       events: [],
       pendingCount: 0,
       role: undefined, // remove this keyword
@@ -138,6 +142,26 @@ const createdOrFoundService = i.omitUndefined(
 );
 const inactiveService = {...createdOrFoundService, status: 'INACTIVE'};
 const serviceThatNeedsUpdating = {...createdOrFoundService, desiredCount: 3};
+const serviceThatIsDoneDeploying = {
+  ...createdOrFoundService,
+  deployments: [
+    {
+      createdAt: '2021-08-27T00:01:00.001Z',
+      desiredCount: 1,
+      failedTasks: 0,
+      id: 'ecs-svc/12345',
+      launchType: 'EC2',
+      networkConfiguration: mockSpec.networkConfiguration,
+      pendingCount: 0,
+      rolloutState: 'COMPLETED',
+      rolloutStateReason: 'ECS deployment ecs-svc/12345 completed.',
+      runningCount: 1,
+      status: 'PRIMARY',
+      taskDefinition: mockSpec.taskDefinition,
+      updatedAt: '2021-08-27T00:01:02.001Z',
+    },
+  ],
+};
 
 const describeServicesCommandOutputMissing = {
   $metadata: {
@@ -166,6 +190,14 @@ const describeServicesCommandOutputFound = {
   },
   failures: [],
   services: [createdOrFoundService],
+};
+
+const describeServicesCommandOutputDoneDeploying = {
+  $metadata: {
+    httpStatusCode: 200,
+  },
+  failures: [],
+  services: [serviceThatIsDoneDeploying],
 };
 
 const describeServicesCommandOutputInactive = {
@@ -217,13 +249,6 @@ describe('PARAMETER CONVERSION', () => {
     });
   });
 
-
-  describe('listTasksInput', () => {
-    test('only returns valid elements', () => {
-      expect(i.listTasksInput(parameters)).toStrictEqual(listTasksInput);
-    });
-  });
-
   describe('updateInput', () => {
     test('only returns valid elements', () => {
       expect(i.updateInput(parameters)).toStrictEqual(updateInput);
@@ -243,102 +268,33 @@ describe('PARAMETER CONVERSION', () => {
 
 /**
  *
- * waitUntilTasksRunning
+ * waitUntilDeploymentComplete
  *
  *****************************************************************************************/
-describe('waitUntilTasksRunning', () => {
-  const oldTaskArn = 'arn:aws:ecs:us-east-1:1234567890:task/my-cluster/abc123';
-  const newTaskArn = 'arn:aws:ecs:us-east-1:1234567890:task/my-cluster/def456';
-  const describeTasksInput = {
-    cluster: mockSpec.cluster,
-    include: ['TAGS'],
-    tasks: [oldTaskArn, newTaskArn],
-  };
-
-  const filteredTasksInput = {
-    cluster: mockSpec.cluster,
-    include: ['TAGS'],
-    tasks: [newTaskArn],
-  };
-
-  const listTasksCommandOutput = {
-    $metadata: {
-      httpStatusCode: 200,
-    },
-    taskArns: [oldTaskArn, newTaskArn],
-  };
-
-  const describeTasksCommandOutput = {
-    $metadata: {
-      httpStatusCode: 200,
-    },
-    failures: [],
-    tasks: [
-      {
-        taskArn: oldTaskArn,
-        taskDefinitionArn: 'arn:aws:ecs:us-east-1:1234567890:task-definition/task-definition-family:1', // older version
-      },
-      {
-        taskArn: newTaskArn,
-        taskDefinitionArn: mockSpec.taskDefinition,
-      },
-    ],
-  };
-
-  describe('isCurrentTaskDefinition', () => {
-    test('returns true if the task definition is the same as the specified task definition', () => {
-      expect(i.isCurrentTaskDefinition({taskDefinitionArn: mockSpec.taskDefinition}, parameters)).toBe(true);
-    });
-  });
-
-  describe('findTasksForThisSpecificTaskDefinition', () => {
-    test('returns the tasks that are in the specified task definition', async () => {
-      ECSClient.send = jest.fn().mockResolvedValue(describeTasksCommandOutput);
-      await expect(i.findTasksForThisSpecificTaskDefinition(ECSClient, describeTasksInput, parameters)).resolves.toStrictEqual(filteredTasksInput);
-    });
-  });
-
-  describe('describeTasksInput', () => {
-    test('succeeds when able to find tasks', async () => {
-      ECSClient.send = jest.fn().mockResolvedValue(listTasksCommandOutput);
-      await expect(i.describeTasksInput(ECSClient, parameters)).resolves.toStrictEqual(describeTasksInput);
-    });
-
-    test('throws when unable to find tasks', async () => {
-      ECSClient.send = jest.fn().mockResolvedValue({taskArns: []});
-      await expect(i.describeTasksInput(ECSClient, parameters)).rejects.toThrow(Error);
-    });
-
-    test('throws when there is a failure', async () => {
-      ECSClient.send = jest.fn().mockResolvedValue(genericFailureResponse);
-      await expect(i.describeTasksInput(ECSClient, parameters)).rejects.toThrow(Error);
-    });
-  });
-
+describe('waitUntilDeploymentComplete', () => {
   describe('waits when defined', () => {
     jest.mock('@aws-sdk/util-waiter');
     const {WaiterState, checkExceptions, createWaiter} = require('@aws-sdk/util-waiter');
 
     beforeEach(() => {
-      waitUntilTasksRunning.mockResolvedValue({state: 'SUCCESS'});
-      waitUntilTasksRunning.mockClear();
       WaiterState.SUCCESS = jest.fn();
       ECSClient.send = jest.fn()
-          .mockResolvedValueOnce(describeServicesCommandOutputNeedsUpdating)
-          .mockResolvedValueOnce(describeServicesCommandOutputFound);
+          .mockResolvedValueOnce(describeServicesCommandOutputFound)
+          .mockResolvedValueOnce(describeServicesCommandOutputFound)
+          .mockResolvedValueOnce(describeServicesCommandOutputDoneDeploying);
     });
 
-    test('calls waitUntilTasksRunning when wait-until-tasks-running is true', async () => {
-      await i.updateService(ECSClient, {...parameters, waitUntilTasksRunning: true});
-      expect(WaiterState.SUCCESS).toHaveBeenCalled();
+    test('calls waitUntilDeploymentComplete when wait-until-deployment-complete is true', async () => {
+      await i.updateService(ECSClient, {...parameters, waitUntilDeploymentComplete: true});
+      expect(ECSClient.send).toHaveBeenCalledTimes(3);
     });
-    test('does not call waitUntilTasksRunning when wait-until-tasks-running is false', async () => {
-      await i.updateService(ECSClient, {...parameters, waitUntilTasksRunning: false});
-      expect(WaiterState.SUCCESS).not.toHaveBeenCalled();
+    test('does not call waitUntilDeploymentComplete when wait-until-deployment-complete is false', async () => {
+      await i.updateService(ECSClient, {...parameters, waitUntilDeploymentComplete: false});
+      expect(ECSClient.send).toHaveBeenCalledTimes(1);
     });
-    test('does not call waitUntilTasksRunning when wait-until-tasks-running is undefined', async () => {
+    test('does not call waitUntilDeploymentComplete when wait-until-deployment-complete is undefined', async () => {
       await i.updateService(ECSClient, parameters);
-      expect(WaiterState.SUCCESS).not.toHaveBeenCalled();
+      expect(ECSClient.send).toHaveBeenCalledTimes(1);
     });
   });
 });
@@ -776,7 +732,7 @@ describe('GITHUB ACTIONS INTERFACE', () => {
       });
     });
 
-    describe('when wait-until-tasks-running is supplied', () => {
+    describe('when wait-until-deployment-complete is supplied', () => {
       test('it gets the parameters', () => {
         core.getInput = jest
             .fn()
@@ -787,7 +743,7 @@ describe('GITHUB ACTIONS INTERFACE', () => {
             .mockReturnValueOnce('')
             .mockReturnValueOnce(JSON.stringify(mockSpec));
 
-        expect(i.getParameters().waitUntilTasksRunning).toBeTruthy();
+        expect(i.getParameters().waitUntilDeploymentComplete).toBeTruthy();
       });
     });
 
