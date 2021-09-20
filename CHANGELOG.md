@@ -1,3 +1,10 @@
+## [1.1.7](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.6...v1.1.7) (2021-09-20)
+
+
+### Bug Fixes
+
+* **deps:** bump tmpl from 1.0.4 to 1.0.5 ([517330a](https://github.com/scribd/amazon-ecs-service-action/commit/517330a314002bfaee0aea9c9aa429c9a4db21c4))
+
 ## [1.1.6](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.5...v1.1.6) (2021-09-20)
 
 
