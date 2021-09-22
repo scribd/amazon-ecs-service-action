@@ -4,6 +4,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+      time: "09:22"
     commit-message:
       prefix: "fix"
       prefix-development: "chore"
@@ -12,3 +13,4 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
+      time: "09:22"
