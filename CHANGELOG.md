@@ -1,3 +1,10 @@
+## [1.1.9](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.8...v1.1.9) (2021-09-22)
+
+
+### Bug Fixes
+
+* **deps:** bump @aws-sdk/client-ecs from 3.32.0 to 3.33.0 ([068c99c](https://github.com/scribd/amazon-ecs-service-action/commit/068c99c0630b75d64c1a710abe1da1c60b1584cb))
+
 ## [1.1.8](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.7...v1.1.8) (2021-09-20)
 
 
