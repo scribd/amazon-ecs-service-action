@@ -1,7 +1,12 @@
 name: Release on Merge
 on:
   push:
-
+    branches:
+      - main
+      - next
+      - next-major
+      - alpha
+      - beta
 jobs:
   release:
     runs-on: ubuntu-18.04
@@ -25,14 +30,16 @@ jobs:
             @semantic-release/git
             @semantic-release/github
       - name: Push updates to branch for major version
-        if: steps.semantic.outputs.new_release_published == 'true'
+        if: |
+          steps.semantic.outputs.new_release_published == 'true' &&
+          steps.semantic.outputs.new_release_channel == 'undefined'
         run: "git push https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git HEAD:refs/heads/v${{steps.semantic.outputs.new_release_major_version}}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-            @semantiReset alpha branch
-            @semantic-release/github
-      - name: Push updates to branch for major version
-        if: steps.semantic.outputs.new_release_published == 'true'
+      - name: Reset alpha branch
+        if: |
+          steps.semantic.outputs.new_release_published == 'true' &&
+          steps.semantic.outputs.new_release_channel == 'undefined'
         run: "git push --force https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git HEAD:refs/heads/alpha"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
