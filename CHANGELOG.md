@@ -1,3 +1,10 @@
+## [1.1.16](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.15...v1.1.16) (2021-12-09)
+
+
+### Bug Fixes
+
+* update deps ([81ff489](https://github.com/scribd/amazon-ecs-service-action/commit/81ff48949a4b36ae8d2ec085de4d06b6cce2ce49))
+
 ## [1.1.15](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.14...v1.1.15) (2021-12-06)
 
 
