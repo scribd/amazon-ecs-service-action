@@ -690,9 +690,9 @@ async function run() {
 /* istanbul ignore next */
 if (__nccwpck_require__.c[__nccwpck_require__.s] === module) {
   run().catch((err) => {
-    core.debug(`Received error: ${JSON.stringify(err)}`);
     const httpStatusCode = err.$metadata ? err.$metadata.httpStatusCode : undefined;
     core.setFailed(`${err.name} (Status code: ${httpStatusCode}): ${err.message}`);
+    core.debug(`Received error: ${JSON.stringify(err)}`).catch(() => { return err });
     core.debug(err.stack);
     process.exit(1);
   });

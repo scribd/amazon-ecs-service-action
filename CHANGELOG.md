@@ -1,3 +1,10 @@
+## [1.1.20-alpha.1](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.19...v1.1.20-alpha.1) (2022-01-28)
+
+
+### Bug Fixes
+
+* if cannot parse err, just print ([aec60e1](https://github.com/scribd/amazon-ecs-service-action/commit/aec60e1e77924a0fcebd95427f6c5f594861218d))
+
 ## [1.1.19](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.18...v1.1.19) (2022-01-28)
 
 
