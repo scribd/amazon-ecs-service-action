@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@vercel/ncc": "^0.33.0",
-    "eslint": "^8.0.0",
+    "eslint": "^8.7.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-no-floating-promise": "^1.0.2",
     "jest": "^27.4.5"
