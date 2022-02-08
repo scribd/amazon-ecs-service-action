@@ -32,14 +32,14 @@ jobs:
       - name: Push updates to branch for major version
         if: |
           steps.semantic.outputs.new_release_published == 'true' &&
-          steps.semantic.outputs.new_release_channel == 'default'
+          steps.semantic.outputs.new_release_channel == 'undefined'
         run: "git push https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git HEAD:refs/heads/v${{steps.semantic.outputs.new_release_major_version}}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Reset alpha branch
         if: |
           steps.semantic.outputs.new_release_published == 'true' &&
-          steps.semantic.outputs.new_release_channel == 'default'
+          steps.semantic.outputs.new_release_channel == 'undefined'
         run: "git push --force https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git HEAD:refs/heads/alpha"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
