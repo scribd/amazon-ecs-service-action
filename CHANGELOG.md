@@ -1,3 +1,10 @@
+## [1.1.22](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.21...v1.1.22) (2022-02-11)
+
+
+### Bug Fixes
+
+* ci: new_release_channel is undefined when default channel is published ([d1181b9](https://github.com/scribd/amazon-ecs-service-action/commit/d1181b944386bcfc5059ac8614711064501363fd))
+
 ## [1.1.21](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.20...v1.1.21) (2022-02-11)
 
 
