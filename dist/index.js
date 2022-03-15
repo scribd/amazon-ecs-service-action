@@ -5754,6 +5754,7 @@ var PlacementStrategy;
 })(PlacementStrategy = exports.PlacementStrategy || (exports.PlacementStrategy = {}));
 var PropagateTags;
 (function (PropagateTags) {
+    PropagateTags["NONE"] = "NONE";
     PropagateTags["SERVICE"] = "SERVICE";
     PropagateTags["TASK_DEFINITION"] = "TASK_DEFINITION";
 })(PropagateTags = exports.PropagateTags || (exports.PropagateTags = {}));
@@ -12483,6 +12484,8 @@ const serializeAws_json1_1UpdateServiceRequest = (input, context) => {
             deploymentConfiguration: serializeAws_json1_1DeploymentConfiguration(input.deploymentConfiguration, context),
         }),
         ...(input.desiredCount !== undefined && input.desiredCount !== null && { desiredCount: input.desiredCount }),
+        ...(input.enableECSManagedTags !== undefined &&
+            input.enableECSManagedTags !== null && { enableECSManagedTags: input.enableECSManagedTags }),
         ...(input.enableExecuteCommand !== undefined &&
             input.enableExecuteCommand !== null && { enableExecuteCommand: input.enableExecuteCommand }),
         ...(input.forceNewDeployment !== undefined &&
@@ -12490,6 +12493,10 @@ const serializeAws_json1_1UpdateServiceRequest = (input, context) => {
         ...(input.healthCheckGracePeriodSeconds !== undefined &&
             input.healthCheckGracePeriodSeconds !== null && {
             healthCheckGracePeriodSeconds: input.healthCheckGracePeriodSeconds,
+        }),
+        ...(input.loadBalancers !== undefined &&
+            input.loadBalancers !== null && {
+            loadBalancers: serializeAws_json1_1LoadBalancers(input.loadBalancers, context),
         }),
         ...(input.networkConfiguration !== undefined &&
             input.networkConfiguration !== null && {
@@ -12505,7 +12512,12 @@ const serializeAws_json1_1UpdateServiceRequest = (input, context) => {
         }),
         ...(input.platformVersion !== undefined &&
             input.platformVersion !== null && { platformVersion: input.platformVersion }),
+        ...(input.propagateTags !== undefined && input.propagateTags !== null && { propagateTags: input.propagateTags }),
         ...(input.service !== undefined && input.service !== null && { service: input.service }),
+        ...(input.serviceRegistries !== undefined &&
+            input.serviceRegistries !== null && {
+            serviceRegistries: serializeAws_json1_1ServiceRegistries(input.serviceRegistries, context),
+        }),
         ...(input.taskDefinition !== undefined &&
             input.taskDefinition !== null && { taskDefinition: input.taskDefinition }),
     };
@@ -19423,9 +19435,12 @@ const ImdsCredentials_1 = __nccwpck_require__(1467);
 const RemoteProviderInit_1 = __nccwpck_require__(2314);
 const retry_1 = __nccwpck_require__(9912);
 const getInstanceMetadataEndpoint_1 = __nccwpck_require__(1206);
+const staticStabilityProvider_1 = __nccwpck_require__(4620);
 const IMDS_PATH = "/latest/meta-data/iam/security-credentials/";
 const IMDS_TOKEN_PATH = "/latest/api/token";
-const fromInstanceMetadata = (init = {}) => {
+const fromInstanceMetadata = (init = {}) => staticStabilityProvider_1.staticStabilityProvider(getInstanceImdsProvider(init), { logger: init.logger });
+exports.fromInstanceMetadata = fromInstanceMetadata;
+const getInstanceImdsProvider = (init) => {
     let disableFetchToken = false;
     const { timeout, maxRetries } = RemoteProviderInit_1.providerConfigFromInit(init);
     const getCredentials = async (maxRetries, options) => {
@@ -19487,7 +19502,6 @@ const fromInstanceMetadata = (init = {}) => {
         }
     };
 };
-exports.fromInstanceMetadata = fromInstanceMetadata;
 const getMetadataToken = async (options) => httpRequest_1.httpRequest({
     ...options,
     path: IMDS_TOKEN_PATH,
@@ -19522,6 +19536,7 @@ const tslib_1 = __nccwpck_require__(4351);
 tslib_1.__exportStar(__nccwpck_require__(5232), exports);
 tslib_1.__exportStar(__nccwpck_require__(5813), exports);
 tslib_1.__exportStar(__nccwpck_require__(2314), exports);
+tslib_1.__exportStar(__nccwpck_require__(1178), exports);
 var httpRequest_1 = __nccwpck_require__(1303);
 Object.defineProperty(exports, "httpRequest", ({ enumerable: true, get: function () { return httpRequest_1.httpRequest; } }));
 var getInstanceMetadataEndpoint_1 = __nccwpck_require__(1206);
@@ -19638,6 +19653,46 @@ exports.retry = retry;
 
 /***/ }),
 
+/***/ 1178:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+
+/***/ }),
+
+/***/ 8473:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getExtendedInstanceMetadataCredentials = void 0;
+const STATIC_STABILITY_REFRESH_INTERVAL_SECONDS = 15 * 60;
+const STATIC_STABILITY_REFRESH_INTERVAL_JITTER_WINDOW_SECONDS = 5 * 60;
+const STATIC_STABILITY_DOC_URL = "https://docs.aws.amazon.com/sdkref/latest/guide/feature-static-credentials.html";
+const getExtendedInstanceMetadataCredentials = (credentials, logger) => {
+    var _a;
+    const refreshInterval = STATIC_STABILITY_REFRESH_INTERVAL_SECONDS +
+        Math.floor(Math.random() * STATIC_STABILITY_REFRESH_INTERVAL_JITTER_WINDOW_SECONDS);
+    const newExpiration = new Date(Date.now() + refreshInterval * 1000);
+    logger.warn("Attempting credential expiration extension due to a credential service availability issue. A refresh of these " +
+        "credentials will be attempted after ${new Date(newExpiration)}.\nFor more information, please visit: " +
+        STATIC_STABILITY_DOC_URL);
+    const originalExpiration = (_a = credentials.originalExpiration) !== null && _a !== void 0 ? _a : credentials.expiration;
+    return {
+        ...credentials,
+        ...(originalExpiration ? { originalExpiration } : {}),
+        expiration: newExpiration,
+    };
+};
+exports.getExtendedInstanceMetadataCredentials = getExtendedInstanceMetadataCredentials;
+
+
+/***/ }),
+
 /***/ 1206:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -19665,6 +19720,43 @@ const getFromEndpointModeConfig = async () => {
             throw new Error(`Unsupported endpoint mode: ${endpointMode}.` + ` Select from ${Object.values(EndpointMode_1.EndpointMode)}`);
     }
 };
+
+
+/***/ }),
+
+/***/ 4620:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.staticStabilityProvider = void 0;
+const getExtendedInstanceMetadataCredentials_1 = __nccwpck_require__(8473);
+const staticStabilityProvider = (provider, options = {}) => {
+    const logger = (options === null || options === void 0 ? void 0 : options.logger) || console;
+    let pastCredentials;
+    return async () => {
+        let credentials;
+        try {
+            credentials = await provider();
+            if (credentials.expiration && credentials.expiration.getTime() < Date.now()) {
+                credentials = getExtendedInstanceMetadataCredentials_1.getExtendedInstanceMetadataCredentials(credentials, logger);
+            }
+        }
+        catch (e) {
+            if (pastCredentials) {
+                logger.warn("Credential renew failed: ", e);
+                credentials = getExtendedInstanceMetadataCredentials_1.getExtendedInstanceMetadataCredentials(pastCredentials, logger);
+            }
+            else {
+                throw e;
+            }
+        }
+        pastCredentials = credentials;
+        return credentials;
+    };
+};
+exports.staticStabilityProvider = staticStabilityProvider;
 
 
 /***/ }),
@@ -20373,6 +20465,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getContentLengthPlugin = exports.contentLengthMiddlewareOptions = exports.contentLengthMiddleware = void 0;
 const protocol_http_1 = __nccwpck_require__(223);
 const CONTENT_LENGTH_HEADER = "content-length";
+const TRANSFER_ENCODING_HEADER = "transfer-encoding";
 function contentLengthMiddleware(bodyLengthChecker) {
     return (next) => async (args) => {
         const request = args.request;
@@ -20382,11 +20475,17 @@ function contentLengthMiddleware(bodyLengthChecker) {
                 Object.keys(headers)
                     .map((str) => str.toLowerCase())
                     .indexOf(CONTENT_LENGTH_HEADER) === -1) {
-                const length = bodyLengthChecker(body);
-                if (length !== undefined) {
+                try {
+                    const length = bodyLengthChecker(body);
                     request.headers = {
                         ...request.headers,
                         [CONTENT_LENGTH_HEADER]: String(length),
+                    };
+                }
+                catch (error) {
+                    request.headers = {
+                        ...request.headers,
+                        [TRANSFER_ENCODING_HEADER]: "chunked",
                     };
                 }
             }
@@ -22967,8 +23066,22 @@ ${util_hex_encoding_1.toHex(hashedRequest)}`;
     }
     getCanonicalPath({ path }) {
         if (this.uriEscapePath) {
-            const doubleEncoded = encodeURIComponent(path.replace(/^\//, ""));
-            return `/${doubleEncoded.replace(/%2F/g, "/")}`;
+            const normalizedPathSegments = [];
+            for (const pathSegment of path.split("/")) {
+                if ((pathSegment === null || pathSegment === void 0 ? void 0 : pathSegment.length) === 0)
+                    continue;
+                if (pathSegment === ".")
+                    continue;
+                if (pathSegment === "..") {
+                    normalizedPathSegments.pop();
+                }
+                else {
+                    normalizedPathSegments.push(pathSegment);
+                }
+            }
+            const normalizedPath = `${(path === null || path === void 0 ? void 0 : path.startsWith("/")) ? "/" : ""}${normalizedPathSegments.join("/")}${normalizedPathSegments.length > 0 && (path === null || path === void 0 ? void 0 : path.endsWith("/")) ? "/" : ""}`;
+            const doubleEncoded = encodeURIComponent(normalizedPath);
+            return doubleEncoded.replace(/%2F/g, "/");
         }
         return path;
     }
@@ -24181,7 +24294,7 @@ exports.toBase64 = toBase64;
 
 /***/ }),
 
-/***/ 4147:
+/***/ 9190:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
@@ -24189,7 +24302,7 @@ exports.toBase64 = toBase64;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.calculateBodyLength = void 0;
 const fs_1 = __nccwpck_require__(7147);
-function calculateBodyLength(body) {
+const calculateBodyLength = (body) => {
     if (!body) {
         return 0;
     }
@@ -24202,11 +24315,27 @@ function calculateBodyLength(body) {
     else if (typeof body.size === "number") {
         return body.size;
     }
-    else if (typeof body.path === "string") {
+    else if (typeof body.path === "string" || Buffer.isBuffer(body.path)) {
         return fs_1.lstatSync(body.path).size;
     }
-}
+    else if (typeof body.fd === "number") {
+        return fs_1.fstatSync(body.fd).size;
+    }
+    throw new Error(`Body Length computation failed for ${body}`);
+};
 exports.calculateBodyLength = calculateBodyLength;
+
+
+/***/ }),
+
+/***/ 4147:
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const tslib_1 = __nccwpck_require__(4351);
+tslib_1.__exportStar(__nccwpck_require__(9190), exports);
 
 
 /***/ }),
@@ -45251,7 +45380,7 @@ module.exports = require("util");
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"@aws-sdk/client-ecs","description":"AWS SDK for JavaScript Ecs Client for Node.js, Browser and React Native","version":"3.53.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:docs":"typedoc","build:es":"tsc -p tsconfig.es.json","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"2.0.0","@aws-crypto/sha256-js":"2.0.0","@aws-sdk/client-sts":"3.53.0","@aws-sdk/config-resolver":"3.53.0","@aws-sdk/credential-provider-node":"3.53.0","@aws-sdk/fetch-http-handler":"3.53.0","@aws-sdk/hash-node":"3.53.0","@aws-sdk/invalid-dependency":"3.53.0","@aws-sdk/middleware-content-length":"3.53.0","@aws-sdk/middleware-host-header":"3.53.0","@aws-sdk/middleware-logger":"3.53.0","@aws-sdk/middleware-retry":"3.53.0","@aws-sdk/middleware-serde":"3.53.0","@aws-sdk/middleware-signing":"3.53.0","@aws-sdk/middleware-stack":"3.53.0","@aws-sdk/middleware-user-agent":"3.53.0","@aws-sdk/node-config-provider":"3.53.0","@aws-sdk/node-http-handler":"3.53.0","@aws-sdk/protocol-http":"3.53.0","@aws-sdk/smithy-client":"3.53.0","@aws-sdk/types":"3.53.0","@aws-sdk/url-parser":"3.53.0","@aws-sdk/util-base64-browser":"3.52.0","@aws-sdk/util-base64-node":"3.52.0","@aws-sdk/util-body-length-browser":"3.52.0","@aws-sdk/util-body-length-node":"3.52.0","@aws-sdk/util-defaults-mode-browser":"3.53.0","@aws-sdk/util-defaults-mode-node":"3.53.0","@aws-sdk/util-user-agent-browser":"3.53.0","@aws-sdk/util-user-agent-node":"3.53.0","@aws-sdk/util-utf8-browser":"3.52.0","@aws-sdk/util-utf8-node":"3.52.0","@aws-sdk/util-waiter":"3.53.0","tslib":"^2.3.0"},"devDependencies":{"@aws-sdk/service-client-documentation-generator":"3.52.0","@tsconfig/recommended":"1.0.1","@types/node":"^12.7.5","concurrently":"7.0.0","downlevel-dts":"0.7.0","rimraf":"3.0.2","typedoc":"0.19.2","typescript":"~4.3.5"},"engines":{"node":">=12.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-ecs","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-ecs"}}');
+module.exports = JSON.parse('{"name":"@aws-sdk/client-ecs","description":"AWS SDK for JavaScript Ecs Client for Node.js, Browser and React Native","version":"3.54.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:docs":"typedoc","build:es":"tsc -p tsconfig.es.json","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"2.0.0","@aws-crypto/sha256-js":"2.0.0","@aws-sdk/client-sts":"3.54.0","@aws-sdk/config-resolver":"3.54.0","@aws-sdk/credential-provider-node":"3.54.0","@aws-sdk/fetch-http-handler":"3.54.0","@aws-sdk/hash-node":"3.54.0","@aws-sdk/invalid-dependency":"3.54.0","@aws-sdk/middleware-content-length":"3.54.0","@aws-sdk/middleware-host-header":"3.54.0","@aws-sdk/middleware-logger":"3.54.0","@aws-sdk/middleware-retry":"3.54.0","@aws-sdk/middleware-serde":"3.54.0","@aws-sdk/middleware-signing":"3.54.0","@aws-sdk/middleware-stack":"3.54.0","@aws-sdk/middleware-user-agent":"3.54.0","@aws-sdk/node-config-provider":"3.54.0","@aws-sdk/node-http-handler":"3.54.0","@aws-sdk/protocol-http":"3.54.0","@aws-sdk/smithy-client":"3.54.0","@aws-sdk/types":"3.54.0","@aws-sdk/url-parser":"3.54.0","@aws-sdk/util-base64-browser":"3.52.0","@aws-sdk/util-base64-node":"3.52.0","@aws-sdk/util-body-length-browser":"3.54.0","@aws-sdk/util-body-length-node":"3.54.0","@aws-sdk/util-defaults-mode-browser":"3.54.0","@aws-sdk/util-defaults-mode-node":"3.54.0","@aws-sdk/util-user-agent-browser":"3.54.0","@aws-sdk/util-user-agent-node":"3.54.0","@aws-sdk/util-utf8-browser":"3.52.0","@aws-sdk/util-utf8-node":"3.52.0","@aws-sdk/util-waiter":"3.54.0","tslib":"^2.3.0"},"devDependencies":{"@aws-sdk/service-client-documentation-generator":"3.52.0","@tsconfig/recommended":"1.0.1","@types/node":"^12.7.5","concurrently":"7.0.0","downlevel-dts":"0.7.0","rimraf":"3.0.2","typedoc":"0.19.2","typescript":"~4.3.5"},"engines":{"node":">=12.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-ecs","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-ecs"}}');
 
 /***/ }),
 
@@ -45259,7 +45388,7 @@ module.exports = JSON.parse('{"name":"@aws-sdk/client-ecs","description":"AWS SD
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.53.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:docs":"typedoc","build:es":"tsc -p tsconfig.es.json","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"2.0.0","@aws-crypto/sha256-js":"2.0.0","@aws-sdk/config-resolver":"3.53.0","@aws-sdk/fetch-http-handler":"3.53.0","@aws-sdk/hash-node":"3.53.0","@aws-sdk/invalid-dependency":"3.53.0","@aws-sdk/middleware-content-length":"3.53.0","@aws-sdk/middleware-host-header":"3.53.0","@aws-sdk/middleware-logger":"3.53.0","@aws-sdk/middleware-retry":"3.53.0","@aws-sdk/middleware-serde":"3.53.0","@aws-sdk/middleware-stack":"3.53.0","@aws-sdk/middleware-user-agent":"3.53.0","@aws-sdk/node-config-provider":"3.53.0","@aws-sdk/node-http-handler":"3.53.0","@aws-sdk/protocol-http":"3.53.0","@aws-sdk/smithy-client":"3.53.0","@aws-sdk/types":"3.53.0","@aws-sdk/url-parser":"3.53.0","@aws-sdk/util-base64-browser":"3.52.0","@aws-sdk/util-base64-node":"3.52.0","@aws-sdk/util-body-length-browser":"3.52.0","@aws-sdk/util-body-length-node":"3.52.0","@aws-sdk/util-defaults-mode-browser":"3.53.0","@aws-sdk/util-defaults-mode-node":"3.53.0","@aws-sdk/util-user-agent-browser":"3.53.0","@aws-sdk/util-user-agent-node":"3.53.0","@aws-sdk/util-utf8-browser":"3.52.0","@aws-sdk/util-utf8-node":"3.52.0","tslib":"^2.3.0"},"devDependencies":{"@aws-sdk/service-client-documentation-generator":"3.52.0","@tsconfig/recommended":"1.0.1","@types/node":"^12.7.5","concurrently":"7.0.0","downlevel-dts":"0.7.0","rimraf":"3.0.2","typedoc":"0.19.2","typescript":"~4.3.5"},"engines":{"node":">=12.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
+module.exports = JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SDK for JavaScript Sso Client for Node.js, Browser and React Native","version":"3.54.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:docs":"typedoc","build:es":"tsc -p tsconfig.es.json","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"2.0.0","@aws-crypto/sha256-js":"2.0.0","@aws-sdk/config-resolver":"3.54.0","@aws-sdk/fetch-http-handler":"3.54.0","@aws-sdk/hash-node":"3.54.0","@aws-sdk/invalid-dependency":"3.54.0","@aws-sdk/middleware-content-length":"3.54.0","@aws-sdk/middleware-host-header":"3.54.0","@aws-sdk/middleware-logger":"3.54.0","@aws-sdk/middleware-retry":"3.54.0","@aws-sdk/middleware-serde":"3.54.0","@aws-sdk/middleware-stack":"3.54.0","@aws-sdk/middleware-user-agent":"3.54.0","@aws-sdk/node-config-provider":"3.54.0","@aws-sdk/node-http-handler":"3.54.0","@aws-sdk/protocol-http":"3.54.0","@aws-sdk/smithy-client":"3.54.0","@aws-sdk/types":"3.54.0","@aws-sdk/url-parser":"3.54.0","@aws-sdk/util-base64-browser":"3.52.0","@aws-sdk/util-base64-node":"3.52.0","@aws-sdk/util-body-length-browser":"3.54.0","@aws-sdk/util-body-length-node":"3.54.0","@aws-sdk/util-defaults-mode-browser":"3.54.0","@aws-sdk/util-defaults-mode-node":"3.54.0","@aws-sdk/util-user-agent-browser":"3.54.0","@aws-sdk/util-user-agent-node":"3.54.0","@aws-sdk/util-utf8-browser":"3.52.0","@aws-sdk/util-utf8-node":"3.52.0","tslib":"^2.3.0"},"devDependencies":{"@aws-sdk/service-client-documentation-generator":"3.52.0","@tsconfig/recommended":"1.0.1","@types/node":"^12.7.5","concurrently":"7.0.0","downlevel-dts":"0.7.0","rimraf":"3.0.2","typedoc":"0.19.2","typescript":"~4.3.5"},"engines":{"node":">=12.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sso","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sso"}}');
 
 /***/ }),
 
@@ -45267,7 +45396,7 @@ module.exports = JSON.parse('{"name":"@aws-sdk/client-sso","description":"AWS SD
 /***/ ((module) => {
 
 "use strict";
-module.exports = JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.53.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:docs":"typedoc","build:es":"tsc -p tsconfig.es.json","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"2.0.0","@aws-crypto/sha256-js":"2.0.0","@aws-sdk/config-resolver":"3.53.0","@aws-sdk/credential-provider-node":"3.53.0","@aws-sdk/fetch-http-handler":"3.53.0","@aws-sdk/hash-node":"3.53.0","@aws-sdk/invalid-dependency":"3.53.0","@aws-sdk/middleware-content-length":"3.53.0","@aws-sdk/middleware-host-header":"3.53.0","@aws-sdk/middleware-logger":"3.53.0","@aws-sdk/middleware-retry":"3.53.0","@aws-sdk/middleware-sdk-sts":"3.53.0","@aws-sdk/middleware-serde":"3.53.0","@aws-sdk/middleware-signing":"3.53.0","@aws-sdk/middleware-stack":"3.53.0","@aws-sdk/middleware-user-agent":"3.53.0","@aws-sdk/node-config-provider":"3.53.0","@aws-sdk/node-http-handler":"3.53.0","@aws-sdk/protocol-http":"3.53.0","@aws-sdk/smithy-client":"3.53.0","@aws-sdk/types":"3.53.0","@aws-sdk/url-parser":"3.53.0","@aws-sdk/util-base64-browser":"3.52.0","@aws-sdk/util-base64-node":"3.52.0","@aws-sdk/util-body-length-browser":"3.52.0","@aws-sdk/util-body-length-node":"3.52.0","@aws-sdk/util-defaults-mode-browser":"3.53.0","@aws-sdk/util-defaults-mode-node":"3.53.0","@aws-sdk/util-user-agent-browser":"3.53.0","@aws-sdk/util-user-agent-node":"3.53.0","@aws-sdk/util-utf8-browser":"3.52.0","@aws-sdk/util-utf8-node":"3.52.0","entities":"2.2.0","fast-xml-parser":"3.19.0","tslib":"^2.3.0"},"devDependencies":{"@aws-sdk/service-client-documentation-generator":"3.52.0","@tsconfig/recommended":"1.0.1","@types/node":"^12.7.5","concurrently":"7.0.0","downlevel-dts":"0.7.0","rimraf":"3.0.2","typedoc":"0.19.2","typescript":"~4.3.5"},"engines":{"node":">=12.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
+module.exports = JSON.parse('{"name":"@aws-sdk/client-sts","description":"AWS SDK for JavaScript Sts Client for Node.js, Browser and React Native","version":"3.54.0","scripts":{"build":"concurrently \'yarn:build:cjs\' \'yarn:build:es\' \'yarn:build:types\'","build:cjs":"tsc -p tsconfig.cjs.json","build:docs":"typedoc","build:es":"tsc -p tsconfig.es.json","build:types":"tsc -p tsconfig.types.json","build:types:downlevel":"downlevel-dts dist-types dist-types/ts3.4","clean":"rimraf ./dist-* && rimraf *.tsbuildinfo"},"main":"./dist-cjs/index.js","types":"./dist-types/index.d.ts","module":"./dist-es/index.js","sideEffects":false,"dependencies":{"@aws-crypto/sha256-browser":"2.0.0","@aws-crypto/sha256-js":"2.0.0","@aws-sdk/config-resolver":"3.54.0","@aws-sdk/credential-provider-node":"3.54.0","@aws-sdk/fetch-http-handler":"3.54.0","@aws-sdk/hash-node":"3.54.0","@aws-sdk/invalid-dependency":"3.54.0","@aws-sdk/middleware-content-length":"3.54.0","@aws-sdk/middleware-host-header":"3.54.0","@aws-sdk/middleware-logger":"3.54.0","@aws-sdk/middleware-retry":"3.54.0","@aws-sdk/middleware-sdk-sts":"3.54.0","@aws-sdk/middleware-serde":"3.54.0","@aws-sdk/middleware-signing":"3.54.0","@aws-sdk/middleware-stack":"3.54.0","@aws-sdk/middleware-user-agent":"3.54.0","@aws-sdk/node-config-provider":"3.54.0","@aws-sdk/node-http-handler":"3.54.0","@aws-sdk/protocol-http":"3.54.0","@aws-sdk/smithy-client":"3.54.0","@aws-sdk/types":"3.54.0","@aws-sdk/url-parser":"3.54.0","@aws-sdk/util-base64-browser":"3.52.0","@aws-sdk/util-base64-node":"3.52.0","@aws-sdk/util-body-length-browser":"3.54.0","@aws-sdk/util-body-length-node":"3.54.0","@aws-sdk/util-defaults-mode-browser":"3.54.0","@aws-sdk/util-defaults-mode-node":"3.54.0","@aws-sdk/util-user-agent-browser":"3.54.0","@aws-sdk/util-user-agent-node":"3.54.0","@aws-sdk/util-utf8-browser":"3.52.0","@aws-sdk/util-utf8-node":"3.52.0","entities":"2.2.0","fast-xml-parser":"3.19.0","tslib":"^2.3.0"},"devDependencies":{"@aws-sdk/service-client-documentation-generator":"3.52.0","@tsconfig/recommended":"1.0.1","@types/node":"^12.7.5","concurrently":"7.0.0","downlevel-dts":"0.7.0","rimraf":"3.0.2","typedoc":"0.19.2","typescript":"~4.3.5"},"engines":{"node":">=12.0.0"},"typesVersions":{"<4.0":{"dist-types/*":["dist-types/ts3.4/*"]}},"files":["dist-*"],"author":{"name":"AWS SDK for JavaScript Team","url":"https://aws.amazon.com/javascript/"},"license":"Apache-2.0","browser":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.browser"},"react-native":{"./dist-es/runtimeConfig":"./dist-es/runtimeConfig.native"},"homepage":"https://github.com/aws/aws-sdk-js-v3/tree/main/clients/client-sts","repository":{"type":"git","url":"https://github.com/aws/aws-sdk-js-v3.git","directory":"clients/client-sts"}}');
 
 /***/ }),
 
