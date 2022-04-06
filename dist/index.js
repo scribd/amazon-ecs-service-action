@@ -311,8 +311,8 @@ function updateNeeded(currentService, parameters) {
  * @return {Array} [true, []]] if update shape is valid, [false, additionalKeys] otherwise
  */
 function isUpdateShapeValid(currentService, updateParams) {
-  const commonKeys = ['cluster', 'desiredCount', 'forceNewDeployment', 'placementConstraints', 'placementStrategy', 'service'];
-  const ecsAvailableKeys = ['deploymentConfiguration', 'networkConfiguration', 'taskDefinition'];
+  const commonKeys = ['cluster', 'desiredCount', 'enableECSManagedTags', 'enableExecuteCommand', 'forceNewDeployment', 'placementConstraints', 'placementStrategy', 'propagateTags', 'service'];
+  const ecsAvailableKeys = ['deploymentConfiguration', 'loadBalancers', 'networkConfiguration', 'serviceRegistries', 'taskDefinition'];
   const codeDeployAvailableKeys = ['deploymentConfiguration', 'healthCheckGracePeriodSeconds'];
   const externalAvailableKeys = ['healthCheckGracePeriodSeconds'];
 

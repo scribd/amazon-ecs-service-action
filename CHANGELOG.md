@@ -1,3 +1,10 @@
+## [1.1.27-alpha.1](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.26...v1.1.27-alpha.1) (2022-04-06)
+
+
+### Bug Fixes
+
+* enableExecuteCommand is a valid update parameter ([dea29c6](https://github.com/scribd/amazon-ecs-service-action/commit/dea29c6a86b19f692a39fd6001c22826ebb95966))
+
 ## [1.1.26](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.25...v1.1.26) (2022-04-06)
 
 
