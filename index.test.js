@@ -29,7 +29,7 @@ const mockSpec = {
   deploymentController: 'ECS',
   desiredCount: 2,
   enableECSManagedTags: true,
-  // enableExecuteCommand: undefined,
+  enableExecuteCommand: false,
   // healthCheckGracePeriodSeconds: undefined,
   launchType: 'EC2',
   loadBalancers: [],
@@ -397,6 +397,8 @@ describe('UPDATE', () => {
     const everyChange = {
       desiredCount: 2,
       cluster: 'my-cluster',
+      enableECSManagedTags: false,
+      propagateTags: 'TASK_DEFINITION',
       placementConstraints: [],
       placementStrategy: [],
       service: 'my-service',
@@ -409,7 +411,9 @@ describe('UPDATE', () => {
       });
 
       test('false when additional parameters are changed', () => {
-        expect(i.isUpdateShapeValid(currentService, invalidChanges)[0]).toEqual(false);
+        invalidChanges.map((change) => {
+          expect(i.isUpdateShapeValid(currentService, {...validChanges, ...change})).toEqual([false, Object.keys(change)]);
+        });
       });
     };
 
@@ -419,13 +423,14 @@ describe('UPDATE', () => {
         ...everyChange,
         deploymentConfiguration: {},
         networkConfiguration: {},
+        loadBalancers: ['abc123'],
+        serviceRegistries: [{}],
         taskDefinition: mockSpec.taskDefinition,
       };
 
-      const invalidChanges = {
-        ...validChanges,
-        healthCheckGracePeriodSeconds: 30,
-      };
+      const invalidChanges = [
+        {healthCheckGracePeriodSeconds: 30},
+      ];
 
       testCases(currentService, validChanges, invalidChanges);
     });
@@ -437,10 +442,12 @@ describe('UPDATE', () => {
         healthCheckGracePeriodSeconds: 30,
       };
 
-      const invalidChanges = {
-        ...validChanges,
-        taskDefinition: 'task-definition-family:123',
-      };
+      const invalidChanges = [
+        {networkConfiguration: {}},
+        {platformVersion: '1.0.0'},
+        {taskDefinition: 'task-definition-family:123'},
+        {loadBalancers: ['abc123']},
+      ];
 
       testCases(currentService, validChanges, invalidChanges);
     });
@@ -452,10 +459,27 @@ describe('UPDATE', () => {
         healthCheckGracePeriodSeconds: 30,
       };
 
-      const invalidChanges = {
-        ...validChanges,
-        taskDefinition: 'task-definition-family:123',
+      const invalidChanges = [
+        {launchType: 'FARGATE'},
+        {loadBalancers: ['abc123']},
+        {networkConfiguration: {}},
+        {platformVersion: '1.0.0'},
+        {taskDefinition: 'task-definition-family:123'},
+      ];
+
+      testCases(currentService, validChanges, invalidChanges);
+    });
+
+    describe('when enableExecuteCommand is true', () => {
+      const currentService = {...createdOrFoundService};
+      const validChanges = {
+        ...everyChange,
+        enableExecuteCommand: true,
       };
+
+      const invalidChanges = [
+        {notARealProperty: true},
+      ];
 
       testCases(currentService, validChanges, invalidChanges);
     });
