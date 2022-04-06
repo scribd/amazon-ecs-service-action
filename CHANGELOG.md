@@ -1,3 +1,10 @@
+## [1.1.27-alpha.2](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.27-alpha.1...v1.1.27-alpha.2) (2022-04-06)
+
+
+### Bug Fixes
+
+* error message for NeedsReplacement is more verbose ([1158314](https://github.com/scribd/amazon-ecs-service-action/commit/1158314841dab8d56c4e16f4f632d9d4f52deb6b))
+
 ## [1.1.27-alpha.1](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.26...v1.1.27-alpha.1) (2022-04-06)
 
 
