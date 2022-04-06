@@ -1,3 +1,11 @@
+## [1.1.27](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.26...v1.1.27) (2022-04-06)
+
+
+### Bug Fixes
+
+* enableExecuteCommand is a valid update parameter ([be15075](https://github.com/scribd/amazon-ecs-service-action/commit/be15075ef4188b5b5f59a1b94b6eca6d87a88474))
+* error message for NeedsReplacement is more verbose ([ad7f041](https://github.com/scribd/amazon-ecs-service-action/commit/ad7f041cc4731def2641bca62d98cb2d17ab4f85))
+
 ## [1.1.26](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.25...v1.1.26) (2022-04-06)
 
 

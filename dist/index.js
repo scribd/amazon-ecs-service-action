@@ -311,8 +311,8 @@ function updateNeeded(currentService, parameters) {
  * @return {Array} [true, []]] if update shape is valid, [false, additionalKeys] otherwise
  */
 function isUpdateShapeValid(currentService, updateParams) {
-  const commonKeys = ['cluster', 'desiredCount', 'forceNewDeployment', 'placementConstraints', 'placementStrategy', 'service'];
-  const ecsAvailableKeys = ['deploymentConfiguration', 'networkConfiguration', 'taskDefinition'];
+  const commonKeys = ['cluster', 'desiredCount', 'enableECSManagedTags', 'enableExecuteCommand', 'forceNewDeployment', 'placementConstraints', 'placementStrategy', 'propagateTags', 'service'];
+  const ecsAvailableKeys = ['deploymentConfiguration', 'loadBalancers', 'networkConfiguration', 'serviceRegistries', 'taskDefinition'];
   const codeDeployAvailableKeys = ['deploymentConfiguration', 'healthCheckGracePeriodSeconds'];
   const externalAvailableKeys = ['healthCheckGracePeriodSeconds'];
 
@@ -521,7 +521,7 @@ async function findCreateOrUpdateService(client, parameters) {
       core.info(`Found, but update needed. Updating ${parameters.spec.serviceName} with: ${JSON.stringify(updateParams)}`);
       return await updateService(client, parameters);
     } else {
-      throw new NeedsReplacement(`The Service needs to be replaced, as the following changes cannot be made: ${JSON.stringify(_.at(updateParams, additionalKeys))}.`);
+      throw new NeedsReplacement(`The Service needs to be replaced, as the following changes cannot be made: ${JSON.stringify(additionalKeys)}.`);
     }
   } else {
     core.info(`${parameters.spec.serviceName} looks good. No further action needed.`);
