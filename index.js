@@ -514,7 +514,7 @@ async function findCreateOrUpdateService(client, parameters) {
       core.info(`Found, but update needed. Updating ${parameters.spec.serviceName} with: ${JSON.stringify(updateParams)}`);
       return await updateService(client, parameters);
     } else {
-      throw new NeedsReplacement(`The Service needs to be replaced, as the following changes cannot be made: ${JSON.stringify(_.at(updateParams, additionalKeys))}.`);
+      throw new NeedsReplacement(`The Service needs to be replaced, as the following changes cannot be made: ${JSON.stringify(additionalKeys)}.`);
     }
   } else {
     core.info(`${parameters.spec.serviceName} looks good. No further action needed.`);
