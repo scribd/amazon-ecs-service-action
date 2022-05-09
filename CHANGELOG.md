@@ -1,3 +1,10 @@
+## [1.1.31](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.30...v1.1.31) (2022-05-09)
+
+
+### Bug Fixes
+
+* **deps:** yarn upgrade 20220503 ([29dfdf3](https://github.com/scribd/amazon-ecs-service-action/commit/29dfdf3075579706e9035f8331550b3a6203ceeb))
+
 ## [1.1.30](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.29...v1.1.30) (2022-05-03)
 
 
