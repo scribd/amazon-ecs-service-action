@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@actions/core@^1.6.0":
+"@actions/core@^1.9.0":
   version "1.9.0"
   resolved "https://registry.yarnpkg.com/@actions/core/-/core-1.9.0.tgz#20c1baac5d4bd2508ba1fc3e5f3fc4b8a80d4082"
   integrity sha512-5pbM693Ih59ZdUhgk+fts+bUWTnIdHV3kwOSr+QIoFHMLg7Gzhwm0cifDY/AG68ekEJAkHnQVpcy4f6GjmzBCA==
@@ -87,7 +87,7 @@
     "@aws-sdk/types" "3.127.0"
     tslib "^2.3.1"
 
-"@aws-sdk/client-ecs@^3.61.0":
+"@aws-sdk/client-ecs@^3.131.0":
   version "3.131.0"
   resolved "https://registry.yarnpkg.com/@aws-sdk/client-ecs/-/client-ecs-3.131.0.tgz#a87134171c6ca2193a4a738111c9b537b981b8b8"
   integrity sha512-sJ+P3bDhaCsdjbXH+mGcv5wCRPDw/+MAidfQ1h+CWJMfkcjxJwUgCIG4fj5uWs/1JZ0lSVbHEeKvSTHyNflSFw==
