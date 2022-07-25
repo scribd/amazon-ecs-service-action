@@ -1,3 +1,12 @@
+## [1.1.40](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.39...v1.1.40) (2022-07-25)
+
+
+### Bug Fixes
+
+* **deps:** update to client 0.131.0 ([a7ab6fb](https://github.com/scribd/amazon-ecs-service-action/commit/a7ab6fb0d00bc8d42fa0ba5c48dd4b4c4a387003))
+* **deps:** yarn upgrade 20220722 ([2744eb6](https://github.com/scribd/amazon-ecs-service-action/commit/2744eb6453c9d241dfcac8092682d306f008d27a))
+* **deps:** yarn upgrade vercel 0.34.0 ([9eb1873](https://github.com/scribd/amazon-ecs-service-action/commit/9eb1873980085442c70e284a0f30e1db2146b92f))
+
 ## [1.1.39](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.38...v1.1.39) (2022-07-22)
 
 
