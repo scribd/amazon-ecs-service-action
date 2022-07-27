@@ -4,17 +4,21 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     concurrency: ${{ github.ref }}
     steps:
       - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 7.6.0
       - uses: actions/setup-node@v3
         with:
           node-version: '16'
-      - run: yarn install
-      - run: yarn lint
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
       - name: commit linting changes
         uses: stefanzweifel/git-auto-commit-action@v4.14.1
         with:
-          commit_message: ":robot: yarn lint [skip ci]"
-      - run: yarn test
+          commit_message: ":robot: pnpm lint [skip ci]"
+      - run: pnpm test
