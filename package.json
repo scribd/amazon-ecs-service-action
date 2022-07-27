@@ -28,6 +28,7 @@
   "dependencies": {
     "@actions/core": "^1.9.0",
     "@aws-sdk/client-ecs": "^3.137.0",
+    "@aws-sdk/util-waiter": "^3.127.0",
     "lodash": "^4.17.21",
     "yaml": "^2.1.1"
   },
