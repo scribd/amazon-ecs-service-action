@@ -4,6 +4,7 @@
   "description": "Creates an Amazon ECS Service.",
   "main": "index.js",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "lint": "eslint **.js --fix",
     "package": "ncc build index.js -o dist",
     "test": "eslint **.js --fix && jest --config .jest.config.js"
