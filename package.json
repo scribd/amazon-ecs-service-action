@@ -27,14 +27,14 @@
   "homepage": "https://github.com/scribd/amazon-ecs-service-action#readme",
   "dependencies": {
     "@actions/core": "^1.9.1",
-    "@aws-sdk/client-ecs": "^3.145.0",
+    "@aws-sdk/client-ecs": "^3.154.0",
     "@aws-sdk/util-waiter": "^3.127.0",
     "lodash": "^4.17.21",
     "yaml": "^2.1.1"
   },
   "devDependencies": {
     "@vercel/ncc": "0.34.0",
-    "eslint": "^8.21.0",
+    "eslint": "^8.22.0",
     "eslint-config-google": "^0.14.0",
     "eslint-plugin-no-floating-promise": "^1.0.2",
     "jest": "^28.1.3"
