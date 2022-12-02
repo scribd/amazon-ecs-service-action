@@ -1,3 +1,10 @@
+## [1.1.49-alpha.2](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.49-alpha.1...v1.1.49-alpha.2) (2022-12-02)
+
+
+### Bug Fixes
+
+* **deps:** pnpm update 2022-12-02 ([95ec540](https://github.com/scribd/amazon-ecs-service-action/commit/95ec5408d2f2fd0e0ff3694a0824a6f69f78eb1d))
+
 ## [1.1.49-alpha.1](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.48...v1.1.49-alpha.1) (2022-10-21)
 
 
