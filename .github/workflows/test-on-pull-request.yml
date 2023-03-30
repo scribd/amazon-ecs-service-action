@@ -18,7 +18,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - name: commit linting changes
-        uses: stefanzweifel/git-auto-commit-action@v4.14.1
+        uses: stefanzweifel/git-auto-commit-action@v4.16.0
         with:
           commit_message: ":robot: pnpm lint [skip ci]"
       - run: pnpm test
