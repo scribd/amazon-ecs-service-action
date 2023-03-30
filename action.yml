@@ -42,5 +42,5 @@ outputs:
   service:
     description: 'The created or found Service in JSON'
 runs:
-  using: 'node12'
+  using: 'node16'
   main: 'dist/index.js'
