@@ -1,3 +1,10 @@
+## [1.1.50-alpha.1](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.49...v1.1.50-alpha.1) (2023-03-30)
+
+
+### Bug Fixes
+
+* **deps:** update aws sdk ([e32cc26](https://github.com/scribd/amazon-ecs-service-action/commit/e32cc26f1fa3324a93a3bcfc78e3d1d44b8f7d9e))
+
 ## [1.1.49](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.48...v1.1.49) (2023-03-30)
 
 
