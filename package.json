@@ -27,8 +27,8 @@
   "homepage": "https://github.com/scribd/amazon-ecs-service-action#readme",
   "dependencies": {
     "@actions/core": "^1.10.0",
-    "@aws-sdk/client-ecs": "^3.301.0",
-    "@aws-sdk/util-waiter": "^3.296.0",
+    "@aws-sdk/client-ecs": "^3.303.0",
+    "@aws-sdk/util-waiter": "^3.303.0",
     "lodash": "^4.17.21",
     "yaml": "^2.2.1"
   },
