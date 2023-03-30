@@ -1,3 +1,12 @@
+## [1.1.49](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.48...v1.1.49) (2023-03-30)
+
+
+### Bug Fixes
+
+* **deps:** pnpm update 2023-03-30 ([76b103e](https://github.com/scribd/amazon-ecs-service-action/commit/76b103eb791b4f1ed6d22e1883659459d5d960c4))
+* **deps:** yarn update 20221021 ([dd71825](https://github.com/scribd/amazon-ecs-service-action/commit/dd71825f05aeac22b362ed7e7e30ac3e00a31077))
+* use node 16 ([eb26c1c](https://github.com/scribd/amazon-ecs-service-action/commit/eb26c1c8d142820e004a9590af6c10cb12480014))
+
 ## [1.1.49-alpha.1](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.48...v1.1.49-alpha.1) (2022-10-21)
 
 
