@@ -1,3 +1,10 @@
+## [1.1.50](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.49...v1.1.50) (2025-03-25)
+
+
+### Bug Fixes
+
+* DEVPLAT-3294 Update github actions due to ubuntu-20.04 deprecation ([921b8ef](https://github.com/scribd/amazon-ecs-service-action/commit/921b8ef20c5e59eff5f8fb94c491a24a97694213))
+
 ## [1.1.49](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.48...v1.1.49) (2023-03-30)
 
 
