@@ -24,7 +24,7 @@ jobs:
       - run: pnpm package
       - name: Semantic Release
         id: semantic
-        uses: cycjimmy/semantic-release-action@v3
+        uses: cycjimmy/semantic-release-action@v4
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
