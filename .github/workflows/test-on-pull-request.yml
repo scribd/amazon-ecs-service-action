@@ -8,7 +8,7 @@ jobs:
     concurrency: ${{ github.ref }}
     steps:
       - uses: actions/checkout@v3
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v4
         with:
           version: 7.6.0
       - uses: actions/setup-node@v3
