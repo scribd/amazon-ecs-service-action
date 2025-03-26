@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-22.04
     concurrency: ${{ github.ref }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v2
         with:
           version: 7.6.0
