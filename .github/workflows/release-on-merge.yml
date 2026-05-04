@@ -30,9 +30,9 @@ jobs:
         with:
           semantic_version: 24
           extra_plugins: |
-            @semantic-release/changelog@6
-            @semantic-release/git@10
-            @semantic-release/github@8
+            @semantic-release/changelog@6.0.3
+            @semantic-release/git@10.0.1
+            @semantic-release/github@12.0.6
       - name: Push updates to branch for major version
         if: |
           steps.semantic.outputs.new_release_published == 'true' &&
