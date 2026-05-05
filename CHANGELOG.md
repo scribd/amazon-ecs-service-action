@@ -1,3 +1,11 @@
+## [1.1.51](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.50...v1.1.51) (2026-05-05)
+
+
+### Bug Fixes
+
+* bump semantic_version to 24 for Node.js 24 compatibility [DEVPLAT-7373] ([d451d93](https://github.com/scribd/amazon-ecs-service-action/commit/d451d9307e78942f704fce84ad73b0e350999a74))
+* update extra_plugins to v24-compatible versions ([0e08df7](https://github.com/scribd/amazon-ecs-service-action/commit/0e08df74c22dba9a3795ee7e9f93a5d9fe719bc8))
+
 ## [1.1.50](https://github.com/scribd/amazon-ecs-service-action/compare/v1.1.49...v1.1.50) (2025-03-25)
 
 
