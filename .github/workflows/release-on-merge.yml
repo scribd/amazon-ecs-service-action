@@ -13,7 +13,7 @@ jobs:
     concurrency: ${{ github.ref }}
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v2
+      - uses: pnpm/action-setup@v5
         with:
           version: 7.6.0
       - uses: actions/setup-node@v6
@@ -24,15 +24,15 @@ jobs:
       - run: pnpm package
       - name: Semantic Release
         id: semantic
-        uses: cycjimmy/semantic-release-action@v3
+        uses: cycjimmy/semantic-release-action@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          semantic_version: 19
+          semantic_version: 24
           extra_plugins: |
-            @semantic-release/changelog@6
-            @semantic-release/git@10
-            @semantic-release/github@8
+            @semantic-release/changelog@6.0.3
+            @semantic-release/git@10.0.1
+            @semantic-release/github@12.0.6
       - name: Push updates to branch for major version
         if: |
           steps.semantic.outputs.new_release_published == 'true' &&
